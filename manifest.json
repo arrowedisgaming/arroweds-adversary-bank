@@ -3,8 +3,8 @@
 	"name": "Arrowed's Adversary Bank",
 	"version": "1.3.0",
 	"minAppVersion": "1.9.14",
-	"description": "Adversary and environment stat blocks for Daggerheart TTRPG. Fork of BeastVault with renaming, conditions, summon, and instance tracking.",
+	"description": "Manage and run Daggerheart TTRPG encounters with searchable adversary stat blocks, condition tracking, and instance management.",
 	"author": "Arrowed",
 	"authorUrl": "https://github.com/arrowedisgaming",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }

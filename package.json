@@ -1,7 +1,7 @@
 {
 	"name": "arroweds-adversary-bank",
 	"version": "1.3.0",
-	"description": "Obsidian plugin for encounter management in Daggerheart TTRPG (Reforged edition)",
+	"description": "Manage and run Daggerheart TTRPG encounters with searchable adversary stat blocks, condition tracking, and instance management.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
