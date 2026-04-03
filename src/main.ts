@@ -15,6 +15,7 @@ export type PluginState = {
                 uses?: { [key: string]: number };
                 countdown?: { [key: string]: number };
                 conditions?: string[];
+                instanceName?: string;
             };
         };
     };
@@ -257,7 +258,7 @@ export default class BeastVault extends Plugin {
             callback: () => this.scanLibrary(true, 'yes')
         })
 
-        this.addRibbonIcon('swords', 'BeastVault menu', (event) => {
+        this.addRibbonIcon('swords', "Arrowed's Adversary Bank", (event) => {
             const menu = new Menu();
             const onClick = (callback: (editor: Editor) => void) => () => {
                 const editor = this.app.workspace.activeEditor?.editor;
