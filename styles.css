@@ -1,0 +1,158 @@
+
+.bv-statblock {
+    font-family: monospace;
+    position: relative
+}
+
+input[type=checkbox].bv-slot {
+    vertical-align: middle;
+    top: -0.1em;
+}
+
+.bv-smaller {
+    font-size: smaller;
+}
+
+.bv-larger {
+    font-size: larger;
+    text-transform: uppercase;
+}
+
+.bv-spreadout {
+    display: flex;
+    justify-content: space-between;
+}
+
+.bv-muted {
+    color: var(--text-muted)
+}
+
+.bv-thresholds {
+    text-align: center;
+    margin-bottom: 0.2em !important;
+}
+
+.bv-rollable {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.bv-rollable:hover {
+    color: rgb(var(--callout-color))
+}
+
+.bv-statblock hr {
+    margin: 0
+}
+
+.bv-statblock ul, .bv-statblock ol {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.bv-padded {
+    padding-right: 2em;
+}
+
+.bv-bottom-corner {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin: 0.5em;
+}
+
+.bv-top-corner {
+    position: absolute;
+    top: var(--size-2-2);
+    right: var(--size-2-2);
+}
+
+.bv-lower-1 {
+    top: 30px;
+}
+
+.bv-lower-2 {
+    top: 56px;
+}
+
+.bv-invisible {
+    display: none;
+}
+
+.bv-feature p {
+    margin: 0 !important;
+}
+
+/* Rename */
+.bv-renameable {
+    cursor: pointer;
+}
+
+.bv-renameable:hover {
+    text-decoration: underline dotted;
+}
+
+.bv-rename-input {
+    font-size: inherit;
+    font-weight: bold;
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    color: inherit;
+    padding: 2px 4px;
+    text-transform: uppercase;
+    width: 100%;
+}
+
+/* Conditions */
+.bv-conditions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 6px 0;
+}
+
+.bv-condition-badge {
+    font-size: 0.75em;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+    opacity: 0.5;
+    user-select: none;
+    transition: opacity 0.15s, background-color 0.15s;
+}
+
+.bv-condition-badge:hover {
+    opacity: 0.8;
+}
+
+.bv-condition-active {
+    opacity: 1;
+    background-color: rgba(var(--callout-color), 0.25);
+    border-color: rgba(var(--callout-color), 0.5);
+    font-weight: 600;
+}
+
+/* Summon */
+.bv-summon-bar {
+    margin: 4px 0;
+}
+
+.bv-summon-button {
+    font-size: 0.8em;
+    padding: 2px 10px;
+    margin-right: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    color: var(--text-normal);
+}
+
+.bv-summon-button:hover {
+    background: var(--background-modifier-hover);
+}
+
+.block-language-daggerheart + .edit-block-button {
+    opacity: var(--icon-opacity) !important;
+}
