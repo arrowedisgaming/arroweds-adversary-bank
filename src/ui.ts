@@ -3,6 +3,29 @@ import { roll } from '@airjp73/dice-notation';
 import BeastVault, { type PluginState } from './main';
 import { hexToRgb, DICE_PATTERN, processAdversary, DH_CONDITIONS, autoSuffixName } from './utils';
 
+/** Returns the dice-roller plugin's API (window.DiceRoller) if available, or null. */
+function getDiceRollerAPI(): any | null {
+    return (window as any).DiceRoller ?? null;
+}
+
+/** Create an inline dice element — uses dice-roller plugin if available, otherwise a plain rollable span. */
+async function diceElement(app: App, dice: string, sourcePath: string, parent: HTMLElement): Promise<void> {
+    const api = getDiceRollerAPI();
+    if (api) {
+        try {
+            const roller = api.getRoller(dice, sourcePath);
+            if (roller) {
+                // Don't auto-roll — show formula text until user clicks the dice icon
+                if (roller.resultEl) roller.resultEl.textContent = dice;
+                roller.hasRunOnce = true; // so 3D dice render on first click
+                parent.appendChild(roller.containerEl);
+                return;
+            }
+        } catch { /* fall through to fallback */ }
+    }
+    parent.createSpan({ text: dice, cls: 'bv-rollable' });
+}
+
 type CardEntry = NonNullable<PluginState['cards'][string]>;
 type InstanceEntry = CardEntry[number];
 
@@ -210,7 +233,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         header.createEl('br');
     }
 
-    createHeader(content: HTMLElement) {
+    async createHeader(content: HTMLElement) {
         if (this.adv.desc) {
             const desc = content.createEl('p', { cls: "bv-smaller bv-muted bv-padded" });
             desc.createEl('i', { text: this.adv.desc });
@@ -221,7 +244,8 @@ export class AdversaryCard extends MarkdownRenderChild {
 
         if (this.adv.attack != null) {
             header.createEl('b', { text: 'Attack: ' });
-            header.createSpan({ text: this.adv.attack, cls: 'bv-rollable bv-rollable-attack' });
+            const attackDice = `1d20${this.adv.attack === '0' ? '' : this.adv.attack}`;
+            await diceElement(this.plugin.app, attackDice, this.filePath, header);
             header.createEl('br');
         }
 
@@ -229,9 +253,16 @@ export class AdversaryCard extends MarkdownRenderChild {
             header.createEl('b', { text: `${this.adv.weapon || 'Weapon'}: ` })
             header.createSpan({ text: this.adv.range || '' })
             header.createSpan({ text: (this.adv.range && this.adv.damage) ? ' | ' : '' });
-            this.adv.damage?.split(DICE_PATTERN).forEach(part => {
-                header.createSpan({ text: part, cls: DICE_PATTERN.test(part) ? 'bv-rollable' : '' });
-            });
+            if (this.adv.damage) {
+                const isDice = new RegExp(DICE_PATTERN.source);
+                for (const part of this.adv.damage.split(DICE_PATTERN)) {
+                    if (isDice.test(part)) {
+                        await diceElement(this.plugin.app, part, this.filePath, header);
+                    } else {
+                        header.createSpan({ text: part });
+                    }
+                }
+            }
             header.createEl('br');
         }
         this.createHeaderEntry(header, 'Experience', this.adv.xp);
@@ -241,7 +272,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         this.createHeaderEntry(header, 'Potential Adversaries', this.adv.adversaries);
     }
 
-    createFeature(content: HTMLElement, index: number, feature: Feature) {
+    async createFeature(content: HTMLElement, index: number, feature: Feature) {
         const paragraph = content.createEl('p', { cls: 'bv-smaller' })
         paragraph.createEl('b', { text: feature.name || '' });
         paragraph.createSpan({ text: feature.type && `${feature.name}` ? ' - ' : '' });
@@ -256,17 +287,40 @@ export class AdversaryCard extends MarkdownRenderChild {
         }
         if (feature.desc) {
             const featureDiv = paragraph.createDiv({ cls: 'bv-feature' });
-            void MarkdownRenderer.render(
+            const useDiceRoller = !!getDiceRollerAPI();
+            const placeholderClass = useDiceRoller ? 'bv-dice-placeholder' : 'bv-rollable';
+            await MarkdownRenderer.render(
                 this.plugin.app,
                 feature
                     .desc
                     .replace(/\b([sS])pend a [fF]ear\b/g, "<b>$1pend a Fear</b>")
                     .replace(/\b([mM])ark a [sS]tress\b/g, '<b class="bv-mark-stress">$1ark a Stress</b>')
-                    .replace(DICE_PATTERN, `<span class=bv-rollable>$&</span>`),
+                    .replace(DICE_PATTERN, `<span class="${placeholderClass}" data-dice="$&">$&</span>`),
                 featureDiv,
                 this.filePath,
                 this
             );
+            if (useDiceRoller) {
+                for (const el of Array.from(featureDiv.querySelectorAll('.bv-dice-placeholder'))) {
+                    const dice = el.getAttribute('data-dice');
+                    if (!dice) continue;
+                    const wrapper = createSpan();
+                    try {
+                        const api = getDiceRollerAPI();
+                        const roller = api?.getRoller(dice, this.filePath);
+                        if (roller) {
+                            if (roller.resultEl) roller.resultEl.textContent = dice;
+                            roller.hasRunOnce = true;
+                            wrapper.appendChild(roller.containerEl);
+                        } else {
+                            wrapper.createSpan({ text: dice, cls: 'bv-rollable' });
+                        }
+                    } catch {
+                        wrapper.createSpan({ text: dice, cls: 'bv-rollable' });
+                    }
+                    el.replaceWith(wrapper);
+                }
+            }
         }
         // Summon buttons
         if (feature.summon) {
@@ -636,10 +690,10 @@ export class AdversaryCard extends MarkdownRenderChild {
             remove.removeClass('bv-invisible');
         }, 5);
 
-        const rerender = () => {
+        const rerender = async () => {
             features.empty();
             statBlock.empty();
-            this.createFeaturesAndStats(features, statBlock);
+            await this.createFeaturesAndStats(features, statBlock);
             this.plugin.updateStatusBar();
         };
 
@@ -658,14 +712,14 @@ export class AdversaryCard extends MarkdownRenderChild {
         });
     }
 
-    createFeaturesAndStats(features: HTMLElement, statBlock: HTMLElement) {
+    async createFeaturesAndStats(features: HTMLElement, statBlock: HTMLElement) {
         const anyStats = this.adv.hp || this.adv.stress || this.adv.thresholds.length;
         if (this.adv.features.length > 0 || anyStats) {
             features.createEl('hr');
         }
 
         for (const [index, feature] of this.adv.features.entries()) {
-            this.createFeature(features, index, feature);
+            await this.createFeature(features, index, feature);
         }
 
         if (this.adv.features.length > 0 && anyStats) {
@@ -678,7 +732,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         }
     }
 
-    render() {
+    async render() {
         this.container.empty();
         const card = this.container.createDiv({ cls: 'callout bv-statblock', attr: { 'data-callout': 'daggerheart-card' } });
         this.createTitle(card);
@@ -706,7 +760,7 @@ export class AdversaryCard extends MarkdownRenderChild {
                 return;
             }
 
-            // Dice rolling
+            // Dice rolling (fallback when dice-roller plugin is not available)
             if (!elt.classList.contains('bv-rollable')) return;
             const dice = elt.classList.contains('bv-rollable-attack')
                 ? `1d20${this.adv.attack == '0' ? '' : this.adv.attack}`
@@ -721,8 +775,8 @@ export class AdversaryCard extends MarkdownRenderChild {
         const features = content.createDiv();
         const statBlock = content.createDiv();
 
-        this.createHeader(header);
-        this.createFeaturesAndStats(features, statBlock);
+        await this.createHeader(header);
+        await this.createFeaturesAndStats(features, statBlock);
         this.createPlusMinosButtons(card, features, statBlock);
 
         const data = this.plugin.state.cards[this.adv.id]?.color;

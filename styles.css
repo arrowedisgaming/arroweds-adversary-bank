@@ -243,6 +243,11 @@ input[type=checkbox].bv-slot {
     background: var(--background-modifier-hover);
 }
 
+/* Dice-roller plugin integration */
+.bv-statblock .dice-roller {
+    display: inline;
+}
+
 .block-language-daggerheart + .edit-block-button {
     opacity: var(--icon-opacity) !important;
 }

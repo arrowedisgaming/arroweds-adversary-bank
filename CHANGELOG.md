@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Dice-roller plugin integration — when [dice-roller](https://github.com/Obsidian-TTRPG-Community/dice-roller) is installed, dice formulas in statblocks (attack, damage, feature descriptions) render as interactive dice-roller elements with tooltips and click-to-reroll
+
+### Fixed
+
+- Dice pattern regex `lastIndex` bug that could cause alternating match failures on damage strings
+
 ## [1.3.0] - 2026-04-03
 
 Forked from [BeastVault](https://github.com/ly0va/beastvault) 1.2.3 by Lyova Potyomkin.
