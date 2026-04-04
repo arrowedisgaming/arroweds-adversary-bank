@@ -20,6 +20,11 @@ Forked from [BeastVault](https://github.com/ly0va/beastvault) 1.2.3 by Lyova Pot
 - Per-stat +/- and clear buttons for HP and Stress slot rows
 - Summon buttons on features with a `summon` field — inserts the named adversary at end of document
 
+### Fixed
+
+- Removed unnecessary type assertions flagged by Obsidian eslint plugin
+- Replaced `as any` casts with proper typed access to card/instance state
+
 ## [1.2.3] - 2025-11-30
 
 ### Note

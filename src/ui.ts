@@ -1,7 +1,10 @@
 import { App, Editor, SuggestModal, Notice, MarkdownRenderChild, stringifyYaml, setIcon, MarkdownRenderer, Menu, type MarkdownPostProcessorContext } from 'obsidian';
 import { roll } from '@airjp73/dice-notation';
-import BeastVault from './main';
+import BeastVault, { type PluginState } from './main';
 import { hexToRgb, DICE_PATTERN, processAdversary, DH_CONDITIONS, autoSuffixName } from './utils';
+
+type CardEntry = NonNullable<PluginState['cards'][string]>;
+type InstanceEntry = CardEntry[number];
 
 type Feature = {
     name?: string;
@@ -182,17 +185,17 @@ export class AdversaryCard extends MarkdownRenderChild {
     }
 
     private markStressOnInstance(index: number) {
-        const keys = [this.adv.id, index, 'stress'];
-        const current = this.plugin.getCardState(keys as (string | number)[]) ?? 0;
+        const keys: (string | number)[] = [this.adv.id, index, 'stress'];
+        const current = this.plugin.getCardState(keys) ?? 0;
         if (current >= this.adv.stress) {
             new Notice('All stress slots already marked');
             return;
         }
-        this.plugin.updateCard(keys as (string | number)[], current + 1);
+        this.plugin.updateCard(keys, current + 1);
         this.render();
 
-        const cardState = this.plugin.state.cards[this.adv.id] as any;
-        const savedName = cardState?.[index]?.instanceName;
+        const cardState = this.plugin.state.cards[this.adv.id];
+        const savedName = (cardState?.[index] as InstanceEntry | undefined)?.instanceName;
         const label = this.count > 1
             ? (savedName || `${this.adv.name || 'Instance'} ${index + 1}`)
             : (this.adv.name || 'Adversary');
@@ -336,8 +339,8 @@ export class AdversaryCard extends MarkdownRenderChild {
     createConditionBar(parent: HTMLElement, index: number) {
         const condBar = parent.createDiv({ cls: 'bv-conditions' });
         const cardState = this.plugin.state.cards[this.adv.id];
-        const currentRaw = cardState?.[index as keyof typeof cardState];
-        const current: string[] = Array.isArray((currentRaw as any)?.conditions) ? (currentRaw as any).conditions : [];
+        const instance = cardState?.[index] as InstanceEntry | undefined;
+        const current: string[] = Array.isArray(instance?.conditions) ? instance.conditions : [];
 
         // Build full condition list: standard + YAML-defined custom + any ad-hoc from state
         const yamlCustom = this.raw.conditions
@@ -361,9 +364,9 @@ export class AdversaryCard extends MarkdownRenderChild {
                 const isActive = badge.hasClass('bv-condition-active');
                 const state = this.plugin.state.cards;
                 if (!state[this.adv.id]) state[this.adv.id] = {};
-                const card = state[this.adv.id] as any;
+                const card = state[this.adv.id] as CardEntry;
                 if (!card[index]) card[index] = {};
-                const inst = card[index];
+                const inst = card[index] as InstanceEntry;
                 const conditions: string[] = Array.isArray(inst.conditions) ? [...inst.conditions] : [];
 
                 if (isActive) {
@@ -503,8 +506,8 @@ export class AdversaryCard extends MarkdownRenderChild {
 
         // Per-instance name label when count > 1
         if (this.count > 1) {
-            const cardState = this.plugin.state.cards[this.adv.id] as any;
-            const savedName = cardState?.[index]?.instanceName;
+            const cardState = this.plugin.state.cards[this.adv.id];
+            const savedName = (cardState?.[index] as InstanceEntry | undefined)?.instanceName;
             const defaultName = `${this.adv.name || 'Instance'} ${index + 1}`;
             const displayName = savedName || defaultName;
 
@@ -528,9 +531,9 @@ export class AdversaryCard extends MarkdownRenderChild {
                     if (newName && newName !== displayName) {
                         const state = this.plugin.state.cards;
                         if (!state[this.adv.id]) state[this.adv.id] = {};
-                        const card = state[this.adv.id] as any;
+                        const card = state[this.adv.id] as CardEntry;
                         if (!card[index]) card[index] = {};
-                        card[index].instanceName = newName;
+                        (card[index] as InstanceEntry).instanceName = newName;
                         this.plugin.updateState();
                     }
                     // Re-render to show updated name
@@ -691,8 +694,8 @@ export class AdversaryCard extends MarkdownRenderChild {
                 } else {
                     const menu = new Menu();
                     for (let i = 0; i < this.count; i++) {
-                        const cardState = this.plugin.state.cards[this.adv.id] as any;
-                        const savedName = cardState?.[i]?.instanceName;
+                        const cardState = this.plugin.state.cards[this.adv.id];
+                        const savedName = (cardState?.[i] as InstanceEntry | undefined)?.instanceName;
                         const label = savedName || `${this.adv.name || 'Instance'} ${i + 1}`;
                         menu.addItem((item) => item
                             .setTitle(label)
