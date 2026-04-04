@@ -251,3 +251,68 @@ input[type=checkbox].bv-slot {
 .block-language-daggerheart + .edit-block-button {
     opacity: var(--icon-opacity) !important;
 }
+
+/* Folder picker modal */
+.bv-folder-picker h3 {
+    margin-top: 0;
+}
+
+.bv-folder-search {
+    margin-bottom: 8px;
+}
+
+.bv-folder-search-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-modifier-form-field);
+    color: var(--text-normal);
+    font-size: 14px;
+}
+
+.bv-folder-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.bv-folder-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.bv-folder-row:hover {
+    background: var(--background-modifier-hover);
+}
+
+.bv-folder-row.is-selected {
+    background: rgba(var(--color-accent-rgb, 124, 77, 255), 0.1);
+}
+
+.bv-folder-path {
+    flex: 1;
+    font-size: 13px;
+}
+
+.bv-folder-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* Settings: selected folder list */
+.bv-selected-folders .setting-item {
+    padding: 4px 0;
+    border: none;
+}
+
+.bv-folder-setting-name {
+    font-family: monospace;
+    font-size: 13px;
+}

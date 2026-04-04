@@ -1,4 +1,4 @@
-import { App, Editor, SuggestModal, Notice, MarkdownRenderChild, stringifyYaml, setIcon, MarkdownRenderer, Menu, type MarkdownPostProcessorContext } from 'obsidian';
+import { App, Editor, SuggestModal, Modal, Setting, Notice, MarkdownRenderChild, stringifyYaml, setIcon, MarkdownRenderer, Menu, type MarkdownPostProcessorContext } from 'obsidian';
 import { roll } from '@airjp73/dice-notation';
 import BeastVault, { type PluginState } from './main';
 import { hexToRgb, DICE_PATTERN, processAdversary, DH_CONDITIONS, autoSuffixName } from './utils';
@@ -138,6 +138,99 @@ export class AdversaryModal extends SuggestModal<RawAdversary> {
             inserted = stringifyYaml(copy);
         }
         this.editor.replaceSelection(`\`\`\`daggerheart\n${inserted.trim()}\n\`\`\`\n`);
+    }
+}
+
+export class FolderPickerModal extends Modal {
+    private selected: Set<string>;
+    private listEl: HTMLElement;
+    private searchEl: HTMLInputElement;
+
+    constructor(app: App, currentFolders: string[], private onSubmit: (folders: string[]) => void) {
+        super(app);
+        this.selected = new Set(currentFolders);
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('bv-folder-picker');
+
+        contentEl.createEl('h3', { text: 'Select library folders' });
+
+        const searchContainer = contentEl.createDiv({ cls: 'bv-folder-search' });
+        this.searchEl = searchContainer.createEl('input', {
+            type: 'text',
+            placeholder: 'Search folders...',
+            cls: 'bv-folder-search-input',
+        });
+        this.searchEl.addEventListener('input', () => this.renderList());
+
+        this.listEl = contentEl.createDiv({ cls: 'bv-folder-list' });
+        this.renderList();
+
+        new Setting(contentEl)
+            .addButton(button => button
+                .setButtonText('Done')
+                .setCta()
+                .onClick(() => {
+                    this.onSubmit([...this.selected]);
+                    this.close();
+                }));
+    }
+
+    private renderList() {
+        this.listEl.empty();
+        const query = this.searchEl.value.toLowerCase();
+        const allFolders = this.app.vault.getAllFolders(false)
+            .sort((a, b) => a.path.localeCompare(b.path));
+
+        // Show selected folders first, then unselected
+        const sorted = [...allFolders].sort((a, b) => {
+            const aSelected = this.selected.has(a.path) ? 0 : 1;
+            const bSelected = this.selected.has(b.path) ? 0 : 1;
+            if (aSelected !== bSelected) return aSelected - bSelected;
+            return a.path.localeCompare(b.path);
+        });
+
+        let shown = 0;
+        for (const folder of sorted) {
+            if (query && !folder.path.toLowerCase().includes(query)) continue;
+            if (shown >= 100) break;
+            shown++;
+
+            const row = this.listEl.createDiv({ cls: 'bv-folder-row' });
+            if (this.selected.has(folder.path)) row.addClass('is-selected');
+
+            const checkbox = row.createEl('input', { type: 'checkbox' });
+            checkbox.checked = this.selected.has(folder.path);
+
+            row.createSpan({ text: folder.path, cls: 'bv-folder-path' });
+
+            const toggle = () => {
+                if (this.selected.has(folder.path)) {
+                    this.selected.delete(folder.path);
+                    row.removeClass('is-selected');
+                    checkbox.checked = false;
+                } else {
+                    this.selected.add(folder.path);
+                    row.addClass('is-selected');
+                    checkbox.checked = true;
+                }
+            };
+            row.addEventListener('click', (e) => {
+                if (e.target !== checkbox) toggle();
+            });
+            checkbox.addEventListener('change', toggle);
+        }
+
+        if (shown === 0) {
+            this.listEl.createDiv({ text: 'No folders found', cls: 'bv-folder-empty' });
+        }
+    }
+
+    onClose() {
+        this.contentEl.empty();
     }
 }
 

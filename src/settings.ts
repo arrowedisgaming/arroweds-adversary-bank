@@ -1,12 +1,14 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import BeastVault from './main';
+import { FolderPickerModal } from './ui';
 
 export type PluginSettings = {
     defaultColor: string;
     showColorPicker: boolean;
     showMassiveThreshold: boolean;
     numberOfPCs: number;
-    libraryFolder?: string;
+    libraryFolder?: string; // deprecated, migrated to libraryFolders
+    libraryFolders: string[];
     ignoreDuplicateNames: boolean;
     compatibleWithFSB: boolean;
 }
@@ -16,6 +18,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     showMassiveThreshold: false,
     defaultColor: '#8A5CF5',
     numberOfPCs: 4,
+    libraryFolders: [],
     ignoreDuplicateNames: true,
     compatibleWithFSB: false,
 }
@@ -77,24 +80,48 @@ export class SettingTab extends PluginSettingTab {
 
         new Setting(containerEl).setName("Homebrew library").setHeading();
 
+        const folderListEl = containerEl.createDiv({ cls: 'bv-selected-folders' });
+        const renderFolderList = () => {
+            folderListEl.empty();
+            const folders = this.plugin.state.settings.libraryFolders;
+            if (folders.length === 0) {
+                folderListEl.createDiv({ text: 'No library folders selected', cls: 'setting-item-description' });
+            } else {
+                for (let i = 0; i < folders.length; i++) {
+                    const row = new Setting(folderListEl)
+                        .setName(folders[i])
+                        .addExtraButton(button => button
+                            .setIcon('trash')
+                            .setTooltip('Remove this folder')
+                            .onClick(async () => {
+                                this.plugin.state.settings.libraryFolders.splice(i, 1);
+                                this.plugin.updateState();
+                                renderFolderList();
+                                await this.plugin.scanLibrary(false, 'conditional');
+                            }));
+                    row.nameEl.addClass('bv-folder-setting-name');
+                }
+            }
+        };
+        renderFolderList();
+
         new Setting(containerEl)
-            .setName('Library folder location')
-            .setDesc('Adversaries from notes, JSON and YAML files in this folder will become available in search')
-            .addText(text => text
-                .setPlaceholder('Example: daggerheart/homebrew')
-                .setValue(this.plugin.state.settings.libraryFolder ?? '')
-                .onChange(async (value) => {
-                    this.plugin.state.settings.libraryFolder = value;
-                    this.plugin.updateState();
-                    await this.plugin.scanLibrary(false, 'conditional');
-                    // TODO: add watcher?
-                }))
+            .setName('Library folders')
+            .setDesc('Adversaries from notes, JSON and YAML files in these folders will become available in search')
             .addButton(button => button
-                .setIcon('library')
-                .setTooltip('View library')
-                .onClick(async () => {
-                    await this.plugin.scanLibrary(true, 'no');
-                    new Notice('Library viewer under construction!');
+                .setButtonText('Choose folders')
+                .setCta()
+                .onClick(() => {
+                    new FolderPickerModal(
+                        this.app,
+                        this.plugin.state.settings.libraryFolders,
+                        async (folders) => {
+                            this.plugin.state.settings.libraryFolders = folders;
+                            this.plugin.updateState();
+                            renderFolderList();
+                            await this.plugin.scanLibrary(false, 'conditional');
+                        }
+                    ).open();
                 }));
 
         new Setting(containerEl)

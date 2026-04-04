@@ -69,17 +69,20 @@ export default class BeastVault extends Plugin {
     }
 
     async scanLibrary(notFoundNotice: boolean, loadedNotice: 'yes' | 'no' | 'conditional') {
-        const folderPath = this.state.settings.libraryFolder;
-        let folder: TFolder | null;
-        if (!folderPath || !(folder = this.app.vault.getFolderByPath(folderPath))) {
+        const folderPaths = this.state.settings.libraryFolders.filter(p => p.trim() !== '');
+        if (folderPaths.length === 0) {
             this.library = [];
-            if (notFoundNotice) {
-                new Notice('Library folder does not exist in the vault');
-            }
             return;
         }
         const newLibrary: RawAdversary[] = [];
-        await walkFolder(folder, async (file) => {
+        const missingFolders: string[] = [];
+        for (const folderPath of folderPaths) {
+            const folder = this.app.vault.getFolderByPath(folderPath);
+            if (!folder) {
+                missingFolders.push(folderPath);
+                continue;
+            }
+            await walkFolder(folder, async (file) => {
             let content: RawAdversary | RawAdversary[];
 
             if (file.extension == 'json') {
@@ -93,15 +96,43 @@ export default class BeastVault extends Plugin {
                 content = tryParseYaml(await this.app.vault.read(file));
             } else if (file.extension == 'md') {
                 const metadata = this.app.metadataCache.getFileCache(file)
+                content = [];
+
+                // Check frontmatter for adversary data
+                const fm = metadata?.frontmatter;
+                if (fm && typeof fm.name === 'string') {
+                    content.push({
+                        name: fm.name,
+                        tier: fm.tier,
+                        type: fm.role ?? fm.type,
+                        desc: fm.desc ?? fm.description,
+                        difficulty: fm.difficulty,
+                        hp: fm.hp,
+                        stress: fm.stress,
+                        thresholds: fm.thresholds,
+                        motives: fm.motives ?? fm.motives_and_tactics,
+                        xp: fm.xp ?? fm.experience,
+                        attack: fm.atk_bonus ?? fm.atk ?? fm.attack,
+                        weapon: fm.weapon_name ?? fm.weapon,
+                        range: fm.weapon_range ?? fm.range,
+                        damage: fm.damage,
+                        tone: fm.tone,
+                        impulses: fm.impulses,
+                        adversaries: fm.adversaries ?? fm.potential_adversaries,
+                        source: fm.source,
+                    } as RawAdversary);
+                }
+
+                // Also check for daggerheart code blocks
                 const codeblocks = metadata?.sections?.filter(sec => sec.type == 'code') ?? [];
-                if (codeblocks.length == 0) return;
+                if (codeblocks.length > 0) {
                 const lines = (await this.app.vault.read(file)).split('\n');
-                content = codeblocks
+                content = content.concat(codeblocks
                     .filter(sec => lines[sec.position.start.line].trim() === '```daggerheart')
                     .map(sec => {
                         const targetLines = lines.slice(sec.position.start.line + 1, sec.position.end.line).join("\n");
                         return { raw: targetLines, ...tryParseYaml(targetLines) };
-                    });
+                    }));
                 // Also scan FSB-compatible statblocks
                 if (this.state.settings.compatibleWithFSB) {
                     const fsb: RawAdversary[] = codeblocks
@@ -143,6 +174,7 @@ export default class BeastVault extends Plugin {
                         .filter((s: RawAdversary | null) => s != null);
                     content = content.concat(fsb);
                 }
+                }
             } else {
                 return;
             }
@@ -154,6 +186,11 @@ export default class BeastVault extends Plugin {
                 }
             }
         })
+        }
+
+        if (notFoundNotice && missingFolders.length > 0) {
+            new Notice(`Library folders not found: ${missingFolders.join(', ')}`);
+        }
 
         if (this.state.settings.ignoreDuplicateNames) {
             this.library = [];
@@ -173,7 +210,7 @@ export default class BeastVault extends Plugin {
         const length = this.library.length;
         if (loadedNotice === 'yes' || loadedNotice === 'conditional' && length > 0) {
             if (length == 0) {
-                new Notice(`No valid stat blocks found in ${this.state.settings.libraryFolder}`);
+                new Notice(`No valid stat blocks found in library folders`);
             } else {
                 // TODO: message about duplicates?
                 new Notice(`Loaded ${length} stat block${length != 1 ? 's' : ''}`)
@@ -194,6 +231,12 @@ export default class BeastVault extends Plugin {
     async onload() {
         this.state = Object.assign({}, { settings: {}, cards: {} }, await this.loadData());
         this.state.settings = Object.assign({}, DEFAULT_SETTINGS, this.state.settings);
+        // Migration: libraryFolder (string) -> libraryFolders (array)
+        if (this.state.settings.libraryFolder && this.state.settings.libraryFolders.length === 0) {
+            this.state.settings.libraryFolders = [this.state.settings.libraryFolder];
+            delete this.state.settings.libraryFolder;
+            this.saveData(this.state);
+        }
         this.battlePoints = this.addStatusBarItem();
         this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.updateStatusBar()));
         this.app.workspace.onLayoutReady(() => this.scanLibrary(false, 'no'));
