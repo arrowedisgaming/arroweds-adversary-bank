@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] - 2026-04-04
+
+### Added
+
+- "Hide built-in library" setting — optionally hide the bundled SRD adversaries and environments from the search modal, showing only your homebrew entries
+- Markdown body parsing for frontmatter-based entries — description, motives & tactics, experience, and features are now extracted from the note body when not present in frontmatter
+
 ## [1.5.0] - 2026-04-04
 
 ### Added

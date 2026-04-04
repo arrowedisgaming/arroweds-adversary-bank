@@ -101,7 +101,7 @@ export default class BeastVault extends Plugin {
                 // Check frontmatter for adversary data
                 const fm = metadata?.frontmatter;
                 if (fm && typeof fm.name === 'string') {
-                    content.push({
+                    const entry: RawAdversary = {
                         name: fm.name,
                         tier: fm.tier,
                         type: fm.role ?? fm.type,
@@ -120,7 +120,38 @@ export default class BeastVault extends Plugin {
                         impulses: fm.impulses,
                         adversaries: fm.adversaries ?? fm.potential_adversaries,
                         source: fm.source,
-                    } as RawAdversary);
+                    };
+
+                    // Enrich from markdown body if fields are missing
+                    const bodyText = await this.app.vault.read(file);
+
+                    if (!entry.desc) {
+                        const descMatch = bodyText.match(/^\*([^*].+?)\*\s*$/m);
+                        if (descMatch) entry.desc = descMatch[1];
+                    }
+                    if (!entry.motives) {
+                        const motivesMatch = bodyText.match(/\*\*Motives\s*(?:&|and)\s*Tactics:\*\*\s*(.*)/i);
+                        if (motivesMatch) entry.motives = motivesMatch[1].trim();
+                    }
+                    if (!entry.xp) {
+                        const xpMatch = bodyText.match(/\*\*Experience:\*\*\s*(.*)/i);
+                        if (xpMatch) entry.xp = xpMatch[1].trim();
+                    }
+                    if (!entry.features || entry.features.length === 0) {
+                        const features: { name: string; type: string; desc: string }[] = [];
+                        const featureRegex = /\*{3}(.+?)\s*[-–—]\s*(\w+):\*{3}\s*([\s\S]*?)(?=\n\n\*{3}|\n\n#{1,3}\s|$)/g;
+                        let featureMatch;
+                        while ((featureMatch = featureRegex.exec(bodyText)) !== null) {
+                            features.push({
+                                name: featureMatch[1].trim(),
+                                type: featureMatch[2].trim(),
+                                desc: featureMatch[3].trim(),
+                            });
+                        }
+                        if (features.length > 0) entry.features = features;
+                    }
+
+                    content.push(entry);
                 }
 
                 // Also check for daggerheart code blocks
@@ -221,11 +252,15 @@ export default class BeastVault extends Plugin {
     }
 
     allAdversaries(): RawAdversary[] {
-        return this.library.filter(adv => (adv.hp && adv.hp > 0) || (adv.stress && adv.stress > 0)).concat(ADV_LIBRARY);
+        const homebrew = this.library.filter(adv => (adv.hp && adv.hp > 0) || (adv.stress && adv.stress > 0));
+        if (this.state.settings.hideBuiltInLibrary) return homebrew;
+        return homebrew.concat(ADV_LIBRARY);
     }
 
     allEnvironments(): RawAdversary[] {
-        return this.library.filter(adv => (!adv.hp || adv.hp == 0) && (!adv.stress || adv.stress == 0)).concat(ENV_LIBRARY);
+        const homebrew = this.library.filter(adv => (!adv.hp || adv.hp == 0) && (!adv.stress || adv.stress == 0));
+        if (this.state.settings.hideBuiltInLibrary) return homebrew;
+        return homebrew.concat(ENV_LIBRARY);
     }
 
     async onload() {

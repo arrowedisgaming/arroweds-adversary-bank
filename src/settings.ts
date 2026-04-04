@@ -10,6 +10,7 @@ export type PluginSettings = {
     libraryFolder?: string; // deprecated, migrated to libraryFolders
     libraryFolders: string[];
     ignoreDuplicateNames: boolean;
+    hideBuiltInLibrary: boolean;
     compatibleWithFSB: boolean;
 }
 
@@ -20,6 +21,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     numberOfPCs: 4,
     libraryFolders: [],
     ignoreDuplicateNames: true,
+    hideBuiltInLibrary: false,
     compatibleWithFSB: false,
 }
 
@@ -133,6 +135,16 @@ export class SettingTab extends PluginSettingTab {
                     this.plugin.state.settings.ignoreDuplicateNames = value;
                     this.plugin.updateState();
                     await this.plugin.scanLibrary(false, 'no');
+                }));
+
+        new Setting(containerEl)
+            .setName('Hide built-in library')
+            .setDesc('Only show adversaries and environments from your homebrew library folders, hiding the built-in SRD entries')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.state.settings.hideBuiltInLibrary)
+                .onChange(async (value) => {
+                    this.plugin.state.settings.hideBuiltInLibrary = value;
+                    this.plugin.updateState();
                 }));
 
         new Setting(containerEl)
