@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-04-12
+
+### Added
+
+- Mobile support — plugin now installs and runs on Obsidian Mobile (iOS/Android)
+- Touch-friendly interactions: long-press to rename adversary titles, mark/clear damage menu on threshold buttons
+- `:active` CSS states on all interactive elements for touch press feedback
+
 ## [1.5.1] - 2026-04-04
 
 ### Added
