@@ -6,5 +6,5 @@
 	"description": "Manage and run Daggerheart TTRPG encounters with searchable adversary stat blocks, condition tracking, and instance management.",
 	"author": "Arrowed",
 	"authorUrl": "https://github.com/arrowedisgaming",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }

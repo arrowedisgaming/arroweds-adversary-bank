@@ -37,7 +37,8 @@ input[type=checkbox].bv-slot {
     font-weight: bold;
 }
 
-.bv-rollable:hover {
+.bv-rollable:hover,
+.bv-rollable:active {
     color: rgb(var(--callout-color))
 }
 
@@ -107,12 +108,14 @@ input[type=checkbox].bv-slot {
     justify-content: center;
 }
 
-.bv-slot-btn:hover {
+.bv-slot-btn:hover,
+.bv-slot-btn:active {
     background: var(--background-modifier-hover);
     color: var(--text-normal);
 }
 
-.bv-slot-btn-clear:hover {
+.bv-slot-btn-clear:hover,
+.bv-slot-btn-clear:active {
     color: var(--text-error);
 }
 
@@ -123,7 +126,8 @@ input[type=checkbox].bv-slot {
     text-decoration-style: dotted;
 }
 
-.bv-mark-stress:hover {
+.bv-mark-stress:hover,
+.bv-mark-stress:active {
     color: rgb(var(--callout-color));
 }
 
@@ -132,7 +136,8 @@ input[type=checkbox].bv-slot {
     cursor: pointer;
 }
 
-.bv-renameable:hover {
+.bv-renameable:hover,
+.bv-renameable:active {
     text-decoration: underline dotted;
 }
 
@@ -154,7 +159,8 @@ input[type=checkbox].bv-slot {
     color: rgb(var(--callout-color));
 }
 
-.bv-instance-name:hover {
+.bv-instance-name:hover,
+.bv-instance-name:active {
     text-decoration: underline dotted;
 }
 
@@ -187,7 +193,8 @@ input[type=checkbox].bv-slot {
     transition: opacity 0.15s, background-color 0.15s;
 }
 
-.bv-condition-badge:hover {
+.bv-condition-badge:hover,
+.bv-condition-badge:active {
     opacity: 0.8;
 }
 
@@ -209,7 +216,8 @@ input[type=checkbox].bv-slot {
     text-align: center;
 }
 
-.bv-condition-add:hover {
+.bv-condition-add:hover,
+.bv-condition-add:active {
     opacity: 0.8;
 }
 
@@ -239,7 +247,8 @@ input[type=checkbox].bv-slot {
     color: var(--text-normal);
 }
 
-.bv-summon-button:hover {
+.bv-summon-button:hover,
+.bv-summon-button:active {
     background: var(--background-modifier-hover);
 }
 
@@ -287,7 +296,8 @@ input[type=checkbox].bv-slot {
     cursor: pointer;
 }
 
-.bv-folder-row:hover {
+.bv-folder-row:hover,
+.bv-folder-row:active {
     background: var(--background-modifier-hover);
 }
 

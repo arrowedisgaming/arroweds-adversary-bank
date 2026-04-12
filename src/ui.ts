@@ -1,4 +1,4 @@
-import { App, Editor, SuggestModal, Modal, Setting, Notice, MarkdownRenderChild, stringifyYaml, setIcon, MarkdownRenderer, Menu, type MarkdownPostProcessorContext } from 'obsidian';
+import { App, Editor, SuggestModal, Modal, Setting, Notice, MarkdownRenderChild, stringifyYaml, setIcon, MarkdownRenderer, Menu, Platform, type MarkdownPostProcessorContext } from 'obsidian';
 import { roll } from '@airjp73/dice-notation';
 import BeastVault, { type PluginState } from './main';
 import { hexToRgb, DICE_PATTERN, processAdversary, DH_CONDITIONS, autoSuffixName } from './utils';
@@ -257,7 +257,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         const nameEl = title.createEl('b', { cls: 'bv-larger bv-renameable', text: `${this.adv.name || ''}` });
         title.createEl('b', { cls: 'bv-smaller bv-padded', text: subTitle(this.adv.tier, this.adv.type) });
 
-        nameEl.addEventListener('dblclick', () => {
+        const openRenameInput = () => {
             const input = createEl('input', { type: 'text', value: this.adv.name || '', cls: 'bv-rename-input' });
             nameEl.replaceWith(input);
             input.focus();
@@ -268,7 +268,6 @@ export class AdversaryCard extends MarkdownRenderChild {
                 if (newName && newName !== this.adv.name) {
                     this.renameTo(newName);
                 } else {
-                    // Re-render to restore the name element
                     this.render();
                 }
             };
@@ -278,7 +277,26 @@ export class AdversaryCard extends MarkdownRenderChild {
                 if (e.key === 'Escape') this.render();
             });
             input.addEventListener('blur', commit);
-        });
+        };
+
+        if (Platform.isMobile) {
+            let pressTimer: number | null = null;
+            nameEl.addEventListener('touchstart', (e) => {
+                pressTimer = window.setTimeout(() => {
+                    pressTimer = null;
+                    e.preventDefault();
+                    openRenameInput();
+                }, 500);
+            }, { passive: false });
+            nameEl.addEventListener('touchend', () => {
+                if (pressTimer !== null) { clearTimeout(pressTimer); pressTimer = null; }
+            });
+            nameEl.addEventListener('touchmove', () => {
+                if (pressTimer !== null) { clearTimeout(pressTimer); pressTimer = null; }
+            });
+        } else {
+            nameEl.addEventListener('dblclick', openRenameInput);
+        }
     }
 
     private renameTo(newName: string) {
@@ -735,13 +753,13 @@ export class AdversaryCard extends MarkdownRenderChild {
             })
         }
 
-        const slotMarker = (x: number) => (event: MouseEvent) => {
-            const slots = event.altKey ? hpSlots.toReversed() : hpSlots;
+        const doMark = (x: number, reverse: boolean) => {
+            const slots = reverse ? hpSlots.toReversed() : hpSlots;
             let toMark = x;
             let marked = 0;
 
             for (const slot of slots) {
-                if (slot.checked == event.altKey && toMark > 0) {
+                if (slot.checked == reverse && toMark > 0) {
                     slot.checked = !slot.checked;
                     toMark--
                 }
@@ -749,6 +767,19 @@ export class AdversaryCard extends MarkdownRenderChild {
             }
             this.plugin.updateCard([this.adv.id, index, 'hp'], marked)
             updateHordeSize?.();
+        };
+
+        const slotMarker = (x: number) => (event: MouseEvent) => {
+            if (event.altKey) {
+                doMark(x, true);
+            } else if (Platform.isMobile) {
+                const menu = new Menu();
+                menu.addItem(item => item.setTitle('Mark damage').onClick(() => doMark(x, false)));
+                menu.addItem(item => item.setTitle('Clear damage').onClick(() => doMark(x, true)));
+                menu.showAtMouseEvent(event);
+            } else {
+                doMark(x, false);
+            }
         };
 
         minor?.addEventListener('click', slotMarker(1));
