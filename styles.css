@@ -32,6 +32,37 @@ input[type=checkbox].bv-slot {
     margin-bottom: 0.2em !important;
 }
 
+.bv-threshold-btn {
+    min-height: 2.35em;
+    padding: 0.12em 1.1em 0;
+    box-sizing: border-box;
+    border-radius: 6px;
+    border: 1px solid rgba(var(--bv-button-color-rgb, var(--callout-color)), 0.28);
+    background: rgba(var(--bv-button-color-rgb, var(--callout-color)), 0.07);
+    background-image: none;
+    box-shadow: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    line-height: 1;
+    vertical-align: middle;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.bv-threshold-btn:hover,
+.bv-threshold-btn:active {
+    border-color: rgba(var(--bv-button-color-rgb, var(--callout-color)), 0.55);
+    background: rgba(var(--bv-button-color-rgb, var(--callout-color)), 0.16);
+    background-image: none;
+    box-shadow: none;
+    color: var(--text-normal);
+}
+
 .bv-rollable {
     cursor: pointer;
     font-weight: bold;
@@ -87,30 +118,47 @@ input[type=checkbox].bv-slot {
 /* HP/Stress slot controls */
 .bv-slot-controls {
     display: inline-flex;
-    gap: 2px;
+    gap: 4px;
     margin-left: 6px;
     vertical-align: middle;
 }
 
 .bv-slot-btn {
     font-size: 0.75em;
-    width: 1.8em;
-    height: 1.8em;
+    width: 3.6em;
+    height: 2.05em;
     padding: 0;
+    box-sizing: border-box;
     line-height: 1;
     cursor: pointer;
     border-radius: 3px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-secondary);
+    border: 1px solid rgba(var(--bv-button-color-rgb, var(--callout-color)), 0.28);
+    background: rgba(var(--bv-button-color-rgb, var(--callout-color)), 0.07);
+    background-image: none;
+    box-shadow: none;
     color: var(--text-muted);
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    font-family: inherit;
+    font-weight: 600;
+    vertical-align: middle;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.bv-slot-btn .svg-icon {
+    width: 1em;
+    height: 1em;
+    stroke-width: 2.25px;
 }
 
 .bv-slot-btn:hover,
 .bv-slot-btn:active {
-    background: var(--background-modifier-hover);
+    border-color: rgba(var(--bv-button-color-rgb, var(--callout-color)), 0.55);
+    background: rgba(var(--bv-button-color-rgb, var(--callout-color)), 0.16);
+    background-image: none;
+    box-shadow: none;
     color: var(--text-normal);
 }
 

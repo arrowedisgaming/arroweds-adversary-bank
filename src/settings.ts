@@ -4,6 +4,7 @@ import { FolderPickerModal } from './ui';
 
 export type PluginSettings = {
     defaultColor: string;
+    statButtonColor: string;
     showColorPicker: boolean;
     showMassiveThreshold: boolean;
     numberOfPCs: number;
@@ -18,6 +19,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     showColorPicker: true,
     showMassiveThreshold: false,
     defaultColor: '#8A5CF5',
+    statButtonColor: '#8A5CF5',
     numberOfPCs: 4,
     libraryFolders: [],
     ignoreDuplicateNames: true,
@@ -42,6 +44,16 @@ export class SettingTab extends PluginSettingTab {
                 .setValue(this.plugin.state.settings.defaultColor)
                 .onChange((value) => {
                     this.plugin.state.settings.defaultColor = value;
+                    this.plugin.updateState();
+                    this.plugin.renderAll();
+                }));
+
+        new Setting(containerEl)
+            .setName('Stat block button color')
+            .addColorPicker(color => color
+                .setValue(this.plugin.state.settings.statButtonColor)
+                .onChange((value) => {
+                    this.plugin.state.settings.statButtonColor = value;
                     this.plugin.updateState();
                     this.plugin.renderAll();
                 }));

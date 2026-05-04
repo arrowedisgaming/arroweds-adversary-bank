@@ -610,9 +610,12 @@ export class AdversaryCard extends MarkdownRenderChild {
 
             if (showControls) {
                 const controls = statBar.createSpan({ cls: 'bv-slot-controls' });
-                const minus = controls.createEl('button', { text: '\u2212', cls: 'bv-slot-btn', attr: { 'aria-label': `Remove 1 ${name}` } });
-                const plus = controls.createEl('button', { text: '+', cls: 'bv-slot-btn', attr: { 'aria-label': `Add 1 ${name}` } });
-                const clear = controls.createEl('button', { text: '\u2715', cls: 'bv-slot-btn bv-slot-btn-clear', attr: { 'aria-label': `Clear ${name}` } });
+                const minus = controls.createEl('button', { cls: 'bv-slot-btn', attr: { 'aria-label': `Remove 1 ${name}` } });
+                const plus = controls.createEl('button', { cls: 'bv-slot-btn', attr: { 'aria-label': `Add 1 ${name}` } });
+                const clear = controls.createEl('button', { cls: 'bv-slot-btn bv-slot-btn-clear', attr: { 'aria-label': `Clear ${name}` } });
+                setIcon(minus, 'arrow-down');
+                setIcon(plus, 'arrow-up');
+                setIcon(clear, 'ban');
 
                 plus.addEventListener('click', () => {
                     for (const slot of slots) {
@@ -651,15 +654,15 @@ export class AdversaryCard extends MarkdownRenderChild {
         let minor, major, severe, massive;
         if (this.adv.thresholds.length > 0) {
             const thresholds = content.createEl('p', { cls: 'bv-thresholds' });
-            minor = thresholds.createEl('button', { text: 'MINOR' });
+            minor = thresholds.createEl('button', { text: 'MINOR', cls: 'bv-threshold-btn' });
             thresholds.createSpan({ text: ` ${this.adv.thresholds[0]} ` });
-            major = thresholds.createEl('button', { text: 'MAJOR' });
+            major = thresholds.createEl('button', { text: 'MAJOR', cls: 'bv-threshold-btn' });
             if (this.adv.thresholds.length > 1) {
                 thresholds.createSpan({ text: ` ${this.adv.thresholds[1]} ` });
-                severe = thresholds.createEl('button', { text: 'SEVERE' });
+                severe = thresholds.createEl('button', { text: 'SEVERE', cls: 'bv-threshold-btn' });
                 if (this.plugin.state.settings.showMassiveThreshold) {
                     thresholds.createSpan({ text: ` ${this.adv.thresholds?.[2] || 2 * this.adv.thresholds[1]} ` });
-                    massive = thresholds.createEl('button', { text: 'MASSIVE' });
+                    massive = thresholds.createEl('button', { text: 'MASSIVE', cls: 'bv-threshold-btn' });
                 }
             }
         }
@@ -913,6 +916,10 @@ export class AdversaryCard extends MarkdownRenderChild {
         }
 
         applyColor(defaultColor);
+
+        const buttonColor = this.plugin.state.settings.statButtonColor;
+        card.style.setProperty('--bv-button-color', buttonColor);
+        card.style.setProperty('--bv-button-color-rgb', hexToRgb(buttonColor));
 
         if (this.plugin.state.settings.showColorPicker) {
             const colorpicker = card.createEl('input', { type: 'color', value: defaultColor, cls: 'bv-bottom-corner' });
