@@ -2,6 +2,8 @@
 
 An [Obsidian.md](https://obsidian.md) plugin for Daggerheart TTRPG GMs to search, edit, and create adversary & environment stat blocks with enhanced encounter management.
 
+[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/arrowedisgaming)
+
 **A fork of [BeastVault](https://github.com/ly0va/beastvault) by [Lyova Potyomkin](https://github.com/ly0va)**, with additional features for running encounters at the table.
 
 ## What's New (over BeastVault)
