@@ -29,13 +29,13 @@ function asStringOrNumber(value: unknown): string | number | undefined {
 
 function asStringOrStringArray(value: unknown): string | string[] | undefined {
     if (typeof value === 'string') return value;
-    if (Array.isArray(value) && value.every(item => typeof item === 'string')) return value;
+    if (Array.isArray(value) && value.every((item): item is string => typeof item === 'string')) return value;
     return undefined;
 }
 
 function asThresholds(value: unknown): string | number | number[] | undefined {
     if (typeof value === 'string' || typeof value === 'number') return value;
-    if (Array.isArray(value) && value.every(item => typeof item === 'number')) return value;
+    if (Array.isArray(value) && value.every((item): item is number => typeof item === 'number')) return value;
     return undefined;
 }
 

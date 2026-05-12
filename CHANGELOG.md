@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.7.4] - 2026-05-12
+
+### Fixed
+
+- Replaced boolean `.every()` callbacks in `asStringOrStringArray` and `asThresholds` (`src/utils.ts`) with type-predicate callbacks so `Array.isArray` narrowing flows through to the return value, eliminating two `@typescript-eslint/no-unsafe-return` warnings.
+
 ## [1.7.3] - 2026-05-12
 
 ### Fixed
