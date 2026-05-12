@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: write
@@ -30,8 +30,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify tag matches manifest
-        run: |
-          node -e "const fs = require('node:fs'); const tag = process.env.GITHUB_REF_NAME?.replace(/^v/, ''); const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8')); if (tag !== manifest.version) { throw new Error(`Tag v${tag} does not match manifest version ${manifest.version}`); }"
+        run: node scripts/verify-release-tag.mjs
+        env:
+          TAG: ${{ github.ref_name }}
 
       - name: Build release assets
         run: pnpm run check

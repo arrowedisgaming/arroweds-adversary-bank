@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.7.3] - 2026-05-12
+
+### Fixed
+
+- Release tag format now matches the manifest version exactly (e.g. `1.7.3`, not `v1.7.3`), per the repo's existing convention and Obsidian's plugin guidelines. Updated the release workflow trigger and tag-verification accordingly. The previous `v1.7.2` tag and release were removed; this metadata-only `1.7.3` republishes the same content under the correct tag.
+
 ## [1.7.2] - 2026-05-12
 
 ### Changed
