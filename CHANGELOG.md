@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.7.2] - 2026-05-12
+
+### Changed
+
+- Added GitHub Actions release automation that builds release assets in CI, generates GitHub artifact attestations, and uploads `main.js`, `manifest.json`, and `styles.css`.
+- Added local and CI checks for TypeScript, Obsidian ESLint rules, and CSS review guardrails.
+
+### Fixed
+
+- Replaced deprecated `builtin-modules` dependency usage with the native Node.js module list already used by the build.
+- Tightened YAML, JSON, frontmatter, Fantasy Statblocks, dice-roller, and saved-state typing to avoid unsafe `any` flows.
+- Marked intentional fire-and-forget promises, improved popout-window compatibility, and removed unused imports.
+- Reworked CSS underlines and overrides to avoid unsupported `text-decoration` declarations and `!important`.
+- Preserved brand-name and acronym capitalization (`Arrowed's Adversary Bank`, `Fantasy Statblocks`, `FSB`, `SRD`) in user-facing settings and ribbon labels by extending the sentence-case lint allowlist.
+- Continued to accept quoted numeric stat fields (e.g. `hp: "8"`) in homebrew YAML, JSON, and frontmatter, restoring parity with prior loose-typed behavior.
+
 ## [1.7.1] - 2026-05-12
 
 ### Fixed

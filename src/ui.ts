@@ -3,22 +3,42 @@ import { roll } from '@airjp73/dice-notation';
 import BeastVault, { type PluginState } from './main';
 import { hexToRgb, DICE_PATTERN, processAdversary, DH_CONDITIONS, autoSuffixName } from './utils';
 
+interface DiceRollerElement {
+    resultEl?: HTMLElement;
+    hasRunOnce: boolean;
+    containerEl: HTMLElement;
+}
+
+interface DiceRollerApi {
+    getRoller(dice: string, sourcePath: string): DiceRollerElement | null | undefined;
+}
+
+declare global {
+    interface Window {
+        DiceRoller?: DiceRollerApi;
+    }
+}
+
 /** Returns the dice-roller plugin's API (window.DiceRoller) if available, or null. */
-function getDiceRollerAPI(): any | null {
-    return (window as any).DiceRoller ?? null;
+function getDiceRollerAPI(): DiceRollerApi | null {
+    return window.DiceRoller ?? null;
+}
+
+function appendDiceRoller(parent: HTMLElement, roller: DiceRollerElement, dice: string) {
+    if (roller.resultEl) roller.resultEl.textContent = dice;
+    roller.hasRunOnce = true;
+    parent.appendChild(roller.containerEl);
 }
 
 /** Create an inline dice element — uses dice-roller plugin if available, otherwise a plain rollable span. */
-async function diceElement(app: App, dice: string, sourcePath: string, parent: HTMLElement): Promise<void> {
+async function diceElement(dice: string, sourcePath: string, parent: HTMLElement): Promise<void> {
     const api = getDiceRollerAPI();
     if (api) {
         try {
             const roller = api.getRoller(dice, sourcePath);
             if (roller) {
                 // Don't auto-roll — show formula text until user clicks the dice icon
-                if (roller.resultEl) roller.resultEl.textContent = dice;
-                roller.hasRunOnce = true; // so 3D dice render on first click
-                parent.appendChild(roller.containerEl);
+                appendDiceRoller(parent, roller, dice);
                 return;
             }
         } catch { /* fall through to fallback */ }
@@ -251,6 +271,16 @@ export class AdversaryCard extends MarkdownRenderChild {
         this.count = this.plugin.state.cards[this.adv.id]?.count || 1;
     }
 
+    private ensureCardState(): CardEntry {
+        this.plugin.state.cards[this.adv.id] ??= {};
+        return this.plugin.state.cards[this.adv.id];
+    }
+
+    private ensureInstanceState(index: number): InstanceEntry {
+        const card = this.ensureCardState();
+        card[index] ??= {};
+        return card[index];
+    }
 
     createTitle(card: HTMLElement) {
         const title = card.createDiv({ cls: 'callout-title bv-spreadout' });
@@ -268,13 +298,13 @@ export class AdversaryCard extends MarkdownRenderChild {
                 if (newName && newName !== this.adv.name) {
                     this.renameTo(newName);
                 } else {
-                    this.render();
+                    void this.render();
                 }
             };
 
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') { e.preventDefault(); commit(); }
-                if (e.key === 'Escape') this.render();
+                if (e.key === 'Escape') void this.render();
             });
             input.addEventListener('blur', commit);
         };
@@ -289,10 +319,10 @@ export class AdversaryCard extends MarkdownRenderChild {
                 }, 500);
             }, { passive: false });
             nameEl.addEventListener('touchend', () => {
-                if (pressTimer !== null) { clearTimeout(pressTimer); pressTimer = null; }
+                if (pressTimer !== null) { window.clearTimeout(pressTimer); pressTimer = null; }
             });
             nameEl.addEventListener('touchmove', () => {
-                if (pressTimer !== null) { clearTimeout(pressTimer); pressTimer = null; }
+                if (pressTimer !== null) { window.clearTimeout(pressTimer); pressTimer = null; }
             });
         } else {
             nameEl.addEventListener('dblclick', openRenameInput);
@@ -326,10 +356,10 @@ export class AdversaryCard extends MarkdownRenderChild {
             return;
         }
         this.plugin.updateCard(keys, current + 1);
-        this.render();
+        void this.render();
 
         const cardState = this.plugin.state.cards[this.adv.id];
-        const savedName = (cardState?.[index] as InstanceEntry | undefined)?.instanceName;
+        const savedName = cardState?.[index]?.instanceName;
         const label = this.count > 1
             ? (savedName || `${this.adv.name || 'Instance'} ${index + 1}`)
             : (this.adv.name || 'Adversary');
@@ -356,7 +386,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         if (this.adv.attack != null) {
             header.createEl('b', { text: 'Attack: ' });
             const attackDice = `1d20${this.adv.attack === '0' ? '' : this.adv.attack}`;
-            await diceElement(this.plugin.app, attackDice, this.filePath, header);
+            await diceElement(attackDice, this.filePath, header);
             header.createEl('br');
         }
 
@@ -368,7 +398,7 @@ export class AdversaryCard extends MarkdownRenderChild {
                 const isDice = new RegExp(DICE_PATTERN.source);
                 for (const part of this.adv.damage.split(DICE_PATTERN)) {
                     if (isDice.test(part)) {
-                        await diceElement(this.plugin.app, part, this.filePath, header);
+                        await diceElement(part, this.filePath, header);
                     } else {
                         header.createSpan({ text: part });
                     }
@@ -420,9 +450,7 @@ export class AdversaryCard extends MarkdownRenderChild {
                         const api = getDiceRollerAPI();
                         const roller = api?.getRoller(dice, this.filePath);
                         if (roller) {
-                            if (roller.resultEl) roller.resultEl.textContent = dice;
-                            roller.hasRunOnce = true;
-                            wrapper.appendChild(roller.containerEl);
+                            appendDiceRoller(wrapper, roller, dice);
                         } else {
                             wrapper.createSpan({ text: dice, cls: 'bv-rollable' });
                         }
@@ -527,11 +555,7 @@ export class AdversaryCard extends MarkdownRenderChild {
 
             badge.addEventListener('click', () => {
                 const isActive = badge.hasClass('bv-condition-active');
-                const state = this.plugin.state.cards;
-                if (!state[this.adv.id]) state[this.adv.id] = {};
-                const card = state[this.adv.id] as CardEntry;
-                if (!card[index]) card[index] = {};
-                const inst = card[index] as InstanceEntry;
+                const inst = this.ensureInstanceState(index);
                 const conditions: string[] = Array.isArray(inst.conditions) ? [...inst.conditions] : [];
 
                 if (isActive) {
@@ -675,7 +699,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         // Per-instance name label when count > 1
         if (this.count > 1) {
             const cardState = this.plugin.state.cards[this.adv.id];
-            const savedName = (cardState?.[index] as InstanceEntry | undefined)?.instanceName;
+            const savedName = cardState?.[index]?.instanceName;
             const defaultName = `${this.adv.name || 'Instance'} ${index + 1}`;
             const displayName = savedName || defaultName;
 
@@ -697,20 +721,16 @@ export class AdversaryCard extends MarkdownRenderChild {
                 const commit = () => {
                     const newName = input.value.trim();
                     if (newName && newName !== displayName) {
-                        const state = this.plugin.state.cards;
-                        if (!state[this.adv.id]) state[this.adv.id] = {};
-                        const card = state[this.adv.id] as CardEntry;
-                        if (!card[index]) card[index] = {};
-                        (card[index] as InstanceEntry).instanceName = newName;
+                        this.ensureInstanceState(index).instanceName = newName;
                         this.plugin.updateState();
                     }
                     // Re-render to show updated name
-                    this.render();
+                    void this.render();
                 };
 
                 input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') { e.preventDefault(); commit(); }
-                    if (e.key === 'Escape') this.render();
+                    if (e.key === 'Escape') void this.render();
                 });
                 input.addEventListener('blur', commit);
             });
@@ -827,14 +847,14 @@ export class AdversaryCard extends MarkdownRenderChild {
         add.addEventListener('click', () => {
             this.count += 1;
             this.plugin.updateCard([this.adv.id, 'count'], this.count);
-            rerender();
+            void rerender();
         });
 
         remove.addEventListener('click', () => {
             if (this.count > 1) {
                 this.count -= 1;
                 this.plugin.updateCard([this.adv.id, 'count'], this.count);
-                rerender();
+                void rerender();
             }
         });
     }
@@ -876,13 +896,13 @@ export class AdversaryCard extends MarkdownRenderChild {
                     const menu = new Menu();
                     for (let i = 0; i < this.count; i++) {
                         const cardState = this.plugin.state.cards[this.adv.id];
-                        const savedName = (cardState?.[i] as InstanceEntry | undefined)?.instanceName;
+                        const savedName = cardState?.[i]?.instanceName;
                         const label = savedName || `${this.adv.name || 'Instance'} ${i + 1}`;
                         menu.addItem((item) => item
                             .setTitle(label)
                             .onClick(() => this.markStressOnInstance(i)));
                     }
-                    menu.showAtMouseEvent(event as MouseEvent);
+                    menu.showAtMouseEvent(event);
                 }
                 return;
             }
@@ -892,7 +912,7 @@ export class AdversaryCard extends MarkdownRenderChild {
             const dice = elt.classList.contains('bv-rollable-attack')
                 ? `1d20${this.adv.attack == '0' ? '' : this.adv.attack}`
                 : elt.innerText;
-            const fragment = document.createDocumentFragment();
+            const fragment = this.container.doc.createDocumentFragment();
             fragment.createEl('code', { text: `${dice} = ${roll(dice).result}` });
             new Notice(fragment);
         });

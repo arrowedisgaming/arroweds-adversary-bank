@@ -3,8 +3,102 @@ import { TFile, TFolder, parseYaml, Notice } from "obsidian";
 import ADV_LIBRARY_DATA from '../data/adversaries.json';
 import ENV_LIBRARY_DATA from '../data/environments.json';
 
-export const ADV_LIBRARY: RawAdversary[] = ADV_LIBRARY_DATA;
-export const ENV_LIBRARY: RawAdversary[] = ENV_LIBRARY_DATA;
+type UnknownRecord = Record<string, unknown>;
+type RawFeature = NonNullable<RawAdversary['features']>[number];
+
+export function isRecord(value: unknown): value is UnknownRecord {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function asString(value: unknown): string | undefined {
+    return typeof value === 'string' ? value : undefined;
+}
+
+function asNumber(value: unknown): number | undefined {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string' && value.trim() !== '') {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) return parsed;
+    }
+    return undefined;
+}
+
+function asStringOrNumber(value: unknown): string | number | undefined {
+    return typeof value === 'string' || typeof value === 'number' ? value : undefined;
+}
+
+function asStringOrStringArray(value: unknown): string | string[] | undefined {
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value) && value.every(item => typeof item === 'string')) return value;
+    return undefined;
+}
+
+function asThresholds(value: unknown): string | number | number[] | undefined {
+    if (typeof value === 'string' || typeof value === 'number') return value;
+    if (Array.isArray(value) && value.every(item => typeof item === 'number')) return value;
+    return undefined;
+}
+
+function asFeature(value: unknown): RawFeature | null {
+    if (!isRecord(value)) return null;
+    const feature: RawFeature = {};
+    feature.name = asString(value.name);
+    feature.type = asString(value.type);
+    feature.desc = asString(value.desc) ?? asString(value.text);
+    feature.uses = asNumber(value.uses);
+    feature.countdown = asNumber(value.countdown);
+    feature.flavor = asString(value.flavor);
+    feature.summon = asStringOrStringArray(value.summon);
+    return feature;
+}
+
+function asFeatures(value: unknown): RawFeature[] | undefined {
+    if (!Array.isArray(value)) return undefined;
+    return value.map(asFeature).filter((feature): feature is RawFeature => feature !== null);
+}
+
+export function toRawAdversary(value: unknown): RawAdversary | null {
+    if (!isRecord(value) || typeof value.name !== 'string') return null;
+
+    return {
+        name: value.name,
+        tier: asNumber(value.tier),
+        type: asString(value.type),
+        desc: asString(value.desc) ?? asString(value.description),
+        difficulty: asStringOrNumber(value.difficulty),
+        features: asFeatures(value.features),
+
+        tone: asString(value.tone),
+        impulses: asString(value.impulses),
+        adversaries: asString(value.adversaries),
+
+        hp: asNumber(value.hp),
+        stress: asNumber(value.stress),
+        thresholds: asThresholds(value.thresholds),
+        attack: asStringOrNumber(value.attack),
+        xp: asStringOrStringArray(value.xp),
+        motives: asString(value.motives),
+
+        weapon: asString(value.weapon),
+        range: asString(value.range),
+        damage: asString(value.damage),
+
+        conditions: asStringOrStringArray(value.conditions),
+        source: asString(value.source),
+        id: asString(value.id),
+        raw: asString(value.raw),
+    };
+}
+
+export function toRawAdversaries(value: unknown): RawAdversary[] {
+    const entries = Array.isArray(value) ? value : [value];
+    return entries
+        .map(toRawAdversary)
+        .filter((entry): entry is RawAdversary => entry !== null);
+}
+
+export const ADV_LIBRARY: RawAdversary[] = toRawAdversaries(ADV_LIBRARY_DATA);
+export const ENV_LIBRARY: RawAdversary[] = toRawAdversaries(ENV_LIBRARY_DATA);
 
 export const ADV_TEMPLATE = `\`\`\`daggerheart
 name:
@@ -154,14 +248,14 @@ export async function walkFolder(folder: TFolder, callback: (file: TFile) => Pro
     }
 }
 
-export function tryParseYaml(source: string, silent: boolean = true) {
+export function tryParseYaml(source: string, silent: boolean = true): unknown {
     try {
-        const parsed = parseYaml(source) ?? {};
+        const parsed: unknown = parseYaml(source) ?? {};
         // Arrays and objects are fine
         return typeof parsed === 'object' ? parsed : {};
     } catch (e) {
         console.error(e);
-        if (!silent) new Notice(e.toString(), 10000);
+        if (!silent) new Notice(String(e), 10000);
         return {};
     }
 }

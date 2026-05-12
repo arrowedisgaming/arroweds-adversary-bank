@@ -1,6 +1,6 @@
-import { Editor, Plugin, setTooltip, Menu, Notice, type TFolder, debounce, type Debouncer } from 'obsidian';
+import { Editor, Plugin, setTooltip, Menu, Notice, debounce, type Debouncer } from 'obsidian';
 import { SettingTab, type PluginSettings, DEFAULT_SETTINGS } from './settings';
-import { ADV_LIBRARY, ENV_LIBRARY, ADV_TEMPLATE, ENV_TEMPLATE, walkFolder, tryParseYaml } from './utils';
+import { ADV_LIBRARY, ENV_LIBRARY, ADV_TEMPLATE, ENV_TEMPLATE, isRecord, toRawAdversary, toRawAdversaries, walkFolder, tryParseYaml } from './utils';
 import { AdversaryCard, AdversaryModal, type RawAdversary } from './ui';
 
 export type PluginState = {
@@ -20,6 +20,124 @@ export type PluginState = {
         };
     };
 };
+
+function readString(value: Record<string, unknown>, key: string): string | undefined {
+    const item = value[key];
+    return typeof item === 'string' ? item : undefined;
+}
+
+function readNumber(value: Record<string, unknown>, key: string): number | undefined {
+    const item = value[key];
+    return typeof item === 'number' ? item : undefined;
+}
+
+function readBoolean(value: Record<string, unknown>, key: string): boolean | undefined {
+    const item = value[key];
+    return typeof item === 'boolean' ? item : undefined;
+}
+
+function readStringArray(value: Record<string, unknown>, key: string): string[] | undefined {
+    const item = value[key];
+    return Array.isArray(item) && item.every(entry => typeof entry === 'string') ? item : undefined;
+}
+
+function readCards(value: unknown): PluginState['cards'] {
+    return isRecord(value) ? value as PluginState['cards'] : {};
+}
+
+function readSettings(value: unknown): PluginSettings {
+    const saved = isRecord(value) ? value : {};
+    return {
+        ...DEFAULT_SETTINGS,
+        defaultColor: readString(saved, 'defaultColor') ?? DEFAULT_SETTINGS.defaultColor,
+        statButtonColor: readString(saved, 'statButtonColor') ?? DEFAULT_SETTINGS.statButtonColor,
+        showColorPicker: readBoolean(saved, 'showColorPicker') ?? DEFAULT_SETTINGS.showColorPicker,
+        showMassiveThreshold: readBoolean(saved, 'showMassiveThreshold') ?? DEFAULT_SETTINGS.showMassiveThreshold,
+        numberOfPCs: readNumber(saved, 'numberOfPCs') ?? DEFAULT_SETTINGS.numberOfPCs,
+        libraryFolder: readString(saved, 'libraryFolder'),
+        libraryFolders: readStringArray(saved, 'libraryFolders') ?? DEFAULT_SETTINGS.libraryFolders,
+        ignoreDuplicateNames: readBoolean(saved, 'ignoreDuplicateNames') ?? DEFAULT_SETTINGS.ignoreDuplicateNames,
+        hideBuiltInLibrary: readBoolean(saved, 'hideBuiltInLibrary') ?? DEFAULT_SETTINGS.hideBuiltInLibrary,
+        compatibleWithFSB: readBoolean(saved, 'compatibleWithFSB') ?? DEFAULT_SETTINGS.compatibleWithFSB,
+    };
+}
+
+function readPluginState(value: unknown): PluginState {
+    if (!isRecord(value)) {
+        return { settings: readSettings({}), cards: {} };
+    }
+
+    return {
+        settings: readSettings(value.settings),
+        cards: readCards(value.cards),
+    };
+}
+
+function buildFrontmatterEntry(frontmatter: unknown): RawAdversary | null {
+    if (!isRecord(frontmatter) || typeof frontmatter.name !== 'string') return null;
+
+    return toRawAdversary({
+        name: frontmatter.name,
+        tier: frontmatter.tier,
+        type: frontmatter.role ?? frontmatter.type,
+        desc: frontmatter.desc ?? frontmatter.description,
+        difficulty: frontmatter.difficulty,
+        hp: frontmatter.hp,
+        stress: frontmatter.stress,
+        thresholds: frontmatter.thresholds,
+        motives: frontmatter.motives ?? frontmatter.motives_and_tactics,
+        xp: frontmatter.xp ?? frontmatter.experience,
+        attack: frontmatter.atk_bonus ?? frontmatter.atk ?? frontmatter.attack,
+        weapon: frontmatter.weapon_name ?? frontmatter.weapon,
+        range: frontmatter.weapon_range ?? frontmatter.range,
+        damage: frontmatter.damage,
+        tone: frontmatter.tone,
+        impulses: frontmatter.impulses,
+        adversaries: frontmatter.adversaries ?? frontmatter.potential_adversaries,
+        source: frontmatter.source,
+    });
+}
+
+function buildDaggerheartEntry(raw: string): RawAdversary | null {
+    const parsed = tryParseYaml(raw);
+    return toRawAdversary({ raw, ...(isRecord(parsed) ? parsed : {}) });
+}
+
+function buildFsbEntry(raw: string): RawAdversary | null {
+    const statblock = tryParseYaml(raw);
+    if (!isRecord(statblock) || typeof statblock.layout !== 'string') return null;
+
+    const isDaggerheart = /daggerheart\s+(environment|adversary)/i.test(statblock.layout);
+    if (!isDaggerheart) return null;
+
+    return toRawAdversary({
+        name: statblock.name,
+        tier: statblock.tier,
+        type: statblock.type,
+        desc: statblock.description,
+        difficulty: statblock.difficulty,
+        hp: statblock.hp,
+        stress: statblock.stress,
+        thresholds: statblock.thresholds,
+        motives: statblock.motives_and_tactics,
+        xp: statblock.experience,
+        attack: statblock.atk,
+        weapon: statblock.attack,
+        range: statblock.range,
+        damage: statblock.damage,
+        impulses: statblock.impulses,
+        adversaries: statblock.potential_adversaries,
+        features: Array.isArray(statblock.feats)
+            ? statblock.feats
+                .filter(isRecord)
+                .map(feat => ({
+                    name: typeof feat.name === 'string' ? feat.name : undefined,
+                    desc: typeof feat.text === 'string' ? feat.text : undefined,
+                }))
+            : undefined,
+        source: statblock.source,
+    });
+}
 
 export default class BeastVault extends Plugin {
     activeBlocks: Map<AdversaryCard, string> = new Map();
@@ -83,44 +201,23 @@ export default class BeastVault extends Plugin {
                 continue;
             }
             await walkFolder(folder, async (file) => {
-            let content: RawAdversary | RawAdversary[];
+            let content: RawAdversary[] = [];
 
             if (file.extension == 'json') {
                 try {
-                    content = JSON.parse(await this.app.vault.read(file));
+                    content = toRawAdversaries(JSON.parse(await this.app.vault.read(file)) as unknown);
                 } catch (e) {
                     console.error(`Failed to parse ${file.path}:\n`, e);
                     return;
                 }
             } else if (file.extension == 'yml' || file.extension == 'yaml') {
-                content = tryParseYaml(await this.app.vault.read(file));
+                content = toRawAdversaries(tryParseYaml(await this.app.vault.read(file)));
             } else if (file.extension == 'md') {
                 const metadata = this.app.metadataCache.getFileCache(file)
-                content = [];
 
                 // Check frontmatter for adversary data
-                const fm = metadata?.frontmatter;
-                if (fm && typeof fm.name === 'string') {
-                    const entry: RawAdversary = {
-                        name: fm.name,
-                        tier: fm.tier,
-                        type: fm.role ?? fm.type,
-                        desc: fm.desc ?? fm.description,
-                        difficulty: fm.difficulty,
-                        hp: fm.hp,
-                        stress: fm.stress,
-                        thresholds: fm.thresholds,
-                        motives: fm.motives ?? fm.motives_and_tactics,
-                        xp: fm.xp ?? fm.experience,
-                        attack: fm.atk_bonus ?? fm.atk ?? fm.attack,
-                        weapon: fm.weapon_name ?? fm.weapon,
-                        range: fm.weapon_range ?? fm.range,
-                        damage: fm.damage,
-                        tone: fm.tone,
-                        impulses: fm.impulses,
-                        adversaries: fm.adversaries ?? fm.potential_adversaries,
-                        source: fm.source,
-                    };
+                const entry = buildFrontmatterEntry(metadata?.frontmatter);
+                if (entry) {
 
                     // Enrich from markdown body if fields are missing
                     const bodyText = await this.app.vault.read(file);
@@ -158,51 +255,23 @@ export default class BeastVault extends Plugin {
                 const codeblocks = metadata?.sections?.filter(sec => sec.type == 'code') ?? [];
                 if (codeblocks.length > 0) {
                 const lines = (await this.app.vault.read(file)).split('\n');
-                content = content.concat(codeblocks
+                const daggerheartBlocks = codeblocks
                     .filter(sec => lines[sec.position.start.line].trim() === '```daggerheart')
                     .map(sec => {
                         const targetLines = lines.slice(sec.position.start.line + 1, sec.position.end.line).join("\n");
-                        return { raw: targetLines, ...tryParseYaml(targetLines) };
-                    }));
+                        return buildDaggerheartEntry(targetLines);
+                    })
+                    .filter((entry): entry is RawAdversary => entry !== null);
+                content = content.concat(daggerheartBlocks);
                 // Also scan FSB-compatible statblocks
                 if (this.state.settings.compatibleWithFSB) {
-                    const fsb: RawAdversary[] = codeblocks
+                    const fsb = codeblocks
                         .filter(sec => lines[sec.position.start.line].trim() === '```statblock')
                         .map(sec => {
                             const targetLines = lines.slice(sec.position.start.line + 1, sec.position.end.line).join("\n");
-                            const statblock = tryParseYaml(targetLines);
-                            const isDaggerheart = statblock.layout && typeof statblock.layout == 'string' && /daggerheart\s+(environment|adversary)/i.test(statblock.layout);
-                            if (!isDaggerheart) return null;
-                            return {
-                                name: statblock.name,
-                                tier: statblock.tier,
-                                type: statblock.type,
-                                desc: statblock.description,
-                                difficulty: statblock.difficulty,
-
-                                hp: statblock.hp,
-                                stress: statblock.stress,
-                                thresholds: statblock.thresholds,
-                                motives: statblock.motives_and_tactics,
-                                xp: statblock.experience,
-                                attack: statblock.atk,
-
-                                weapon: statblock.attack,
-                                range: statblock.range,
-                                damage: statblock.damage,
-
-                                impulses: statblock.impulses,
-                                adversaries: statblock.potential_adversaries,
-
-                                features: statblock.feats?.map((f?: { name?: string, text?: string }) => ({
-                                    name: f?.name,
-                                    desc: f?.text
-                                })),
-
-                                source: statblock.source,
-                            } as RawAdversary;
+                            return buildFsbEntry(targetLines);
                         })
-                        .filter((s: RawAdversary | null) => s != null);
+                        .filter((entry): entry is RawAdversary => entry !== null);
                     content = content.concat(fsb);
                 }
                 }
@@ -210,11 +279,8 @@ export default class BeastVault extends Plugin {
                 return;
             }
 
-            if (!Array.isArray(content)) content = [content];
             for (const item of content) {
-                if (item && typeof item == 'object' && typeof item.name == 'string') {
-                    newLibrary.push({ source: 'homebrew', ...item });
-                }
+                newLibrary.push({ source: 'homebrew', ...item });
             }
         })
         }
@@ -264,23 +330,22 @@ export default class BeastVault extends Plugin {
     }
 
     async onload() {
-        this.state = Object.assign({}, { settings: {}, cards: {} }, await this.loadData());
-        this.state.settings = Object.assign({}, DEFAULT_SETTINGS, this.state.settings);
+        this.state = readPluginState(await this.loadData() as unknown);
         // Migration: libraryFolder (string) -> libraryFolders (array)
         if (this.state.settings.libraryFolder && this.state.settings.libraryFolders.length === 0) {
             this.state.settings.libraryFolders = [this.state.settings.libraryFolder];
             delete this.state.settings.libraryFolder;
-            this.saveData(this.state);
+            void this.saveData(this.state);
         }
         this.battlePoints = this.addStatusBarItem();
         this.registerEvent(this.app.workspace.on('active-leaf-change', () => this.updateStatusBar()));
-        this.app.workspace.onLayoutReady(() => this.scanLibrary(false, 'no'));
+        this.app.workspace.onLayoutReady(() => void this.scanLibrary(false, 'no'));
         this.updateState = debounce(() => this.saveData(this.state), 1000, true);
 
         this.registerMarkdownCodeBlockProcessor("daggerheart", (src, el, ctx) => {
-            const child = new AdversaryCard(el, tryParseYaml(src, false), this, ctx);
+            const child = new AdversaryCard(el, toRawAdversary(tryParseYaml(src, false)) ?? {}, this, ctx);
             ctx.addChild(child);
-            child.render();
+            void child.render();
             // Track it so we can refresh on settings change:
             this.activeBlocks.set(child, this.app.workspace.getActiveFile()?.path ?? ctx.sourcePath);
             this.updateStatusBar();
@@ -333,7 +398,7 @@ export default class BeastVault extends Plugin {
         this.addCommand({
             id: 'refresh-library',
             name: 'Refresh library',
-            callback: () => this.scanLibrary(true, 'yes')
+            callback: () => void this.scanLibrary(true, 'yes')
         })
 
         this.addRibbonIcon('swords', "Arrowed's Adversary Bank", (event) => {
@@ -374,7 +439,7 @@ export default class BeastVault extends Plugin {
             menu.addItem((item) => item
                 .setTitle('Refresh library')
                 .setIcon('refresh-cw')
-                .onClick(() => this.scanLibrary(true, 'yes')));
+                .onClick(() => void this.scanLibrary(true, 'yes')));
 
             menu.showAtMouseEvent(event);
         });
@@ -386,7 +451,7 @@ export default class BeastVault extends Plugin {
 
     renderAll() {
         for (const [block] of this.activeBlocks) {
-            block.render();
+            void block.render();
         }
     }
 
@@ -413,4 +478,3 @@ export default class BeastVault extends Plugin {
         }
     }
 }
-

@@ -40,6 +40,15 @@ All original BeastVault features are fully preserved:
 5. If Obsidian was open, restart it
 6. Navigate to `Settings` > `Community plugins` and enable Arrowed's Adversary Bank
 
+### Release provenance
+
+Release assets are built by GitHub Actions and published with GitHub artifact attestations. To verify a downloaded asset, install the GitHub CLI and run:
+
+```bash
+gh attestation verify main.js -R arrowedisgaming/arroweds-adversary-bank
+gh attestation verify styles.css -R arrowedisgaming/arroweds-adversary-bank
+```
+
 ### Via [BRAT](https://github.com/TfTHacker/obsidian42-brat)
 
 1. Install the [BRAT](obsidian://show-plugin?id=obsidian42-brat) plugin from the community plugins browser

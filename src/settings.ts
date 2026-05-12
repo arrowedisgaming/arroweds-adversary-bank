@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting } from 'obsidian';
 import BeastVault from './main';
 import { FolderPickerModal } from './ui';
 
@@ -107,11 +107,11 @@ export class SettingTab extends PluginSettingTab {
                         .addExtraButton(button => button
                             .setIcon('trash')
                             .setTooltip('Remove this folder')
-                            .onClick(async () => {
+                            .onClick(() => {
                                 this.plugin.state.settings.libraryFolders.splice(i, 1);
                                 this.plugin.updateState();
                                 renderFolderList();
-                                await this.plugin.scanLibrary(false, 'conditional');
+                                void this.plugin.scanLibrary(false, 'conditional');
                             }));
                     row.nameEl.addClass('bv-folder-setting-name');
                 }
@@ -129,11 +129,11 @@ export class SettingTab extends PluginSettingTab {
                     new FolderPickerModal(
                         this.app,
                         this.plugin.state.settings.libraryFolders,
-                        async (folders) => {
+                        (folders) => {
                             this.plugin.state.settings.libraryFolders = folders;
                             this.plugin.updateState();
                             renderFolderList();
-                            await this.plugin.scanLibrary(false, 'conditional');
+                            void this.plugin.scanLibrary(false, 'conditional');
                         }
                     ).open();
                 }));
@@ -143,10 +143,10 @@ export class SettingTab extends PluginSettingTab {
             .setDesc('If multiple adversaries share the same name, only the first one found will be used in search')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.state.settings.ignoreDuplicateNames)
-                .onChange(async (value) => {
+                .onChange((value) => {
                     this.plugin.state.settings.ignoreDuplicateNames = value;
                     this.plugin.updateState();
-                    await this.plugin.scanLibrary(false, 'no');
+                    void this.plugin.scanLibrary(false, 'no');
                 }));
 
         new Setting(containerEl)
@@ -154,7 +154,7 @@ export class SettingTab extends PluginSettingTab {
             .setDesc('Only show adversaries and environments from your homebrew library folders, hiding the built-in SRD entries')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.state.settings.hideBuiltInLibrary)
-                .onChange(async (value) => {
+                .onChange((value) => {
                     this.plugin.state.settings.hideBuiltInLibrary = value;
                     this.plugin.updateState();
                 }));
@@ -164,10 +164,10 @@ export class SettingTab extends PluginSettingTab {
             .setDesc('Any FSB-compatible statblocks in the notes inside the library folder will be also be available in search')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.state.settings.compatibleWithFSB)
-                .onChange(async (value) => {
+                .onChange((value) => {
                     this.plugin.state.settings.compatibleWithFSB = value;
                     this.plugin.updateState();
-                    await this.plugin.scanLibrary(false, 'no');
+                    void this.plugin.scanLibrary(false, 'no');
                 }));
     }
 }

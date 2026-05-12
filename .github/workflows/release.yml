@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches manifest
+        run: |
+          node -e "const fs = require('node:fs'); const tag = process.env.GITHUB_REF_NAME?.replace(/^v/, ''); const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8')); if (tag !== manifest.version) { throw new Error(`Tag v${tag} does not match manifest version ${manifest.version}`); }"
+
+      - name: Build release assets
+        run: pnpm run check
+
+      - name: Generate artifact attestations
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            main.js
+            styles.css
+            manifest.json
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file CHANGELOG.md
+          gh release upload "$GITHUB_REF_NAME" main.js styles.css manifest.json --clobber

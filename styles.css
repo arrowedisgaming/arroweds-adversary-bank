@@ -27,9 +27,9 @@ input[type=checkbox].bv-slot {
     color: var(--text-muted)
 }
 
-.bv-thresholds {
+.bv-statblock .bv-thresholds {
     text-align: center;
-    margin-bottom: 0.2em !important;
+    margin-bottom: 0.2em;
 }
 
 .bv-threshold-btn {
@@ -111,8 +111,8 @@ input[type=checkbox].bv-slot {
     display: none;
 }
 
-.bv-feature p {
-    margin: 0 !important;
+.bv-statblock .bv-feature p {
+    margin: 0;
 }
 
 /* HP/Stress slot controls */
@@ -170,8 +170,7 @@ input[type=checkbox].bv-slot {
 /* Mark a Stress action */
 .bv-mark-stress {
     cursor: pointer;
-    text-decoration: underline;
-    text-decoration-style: dotted;
+    border-bottom: 1px dotted currentColor;
 }
 
 .bv-mark-stress:hover,
@@ -186,7 +185,7 @@ input[type=checkbox].bv-slot {
 
 .bv-renameable:hover,
 .bv-renameable:active {
-    text-decoration: underline dotted;
+    border-bottom: 1px dotted currentColor;
 }
 
 .bv-rename-input {
@@ -209,7 +208,7 @@ input[type=checkbox].bv-slot {
 
 .bv-instance-name:hover,
 .bv-instance-name:active {
-    text-decoration: underline dotted;
+    border-bottom: 1px dotted currentColor;
 }
 
 .bv-instance-name-input {
@@ -305,8 +304,10 @@ input[type=checkbox].bv-slot {
     display: inline;
 }
 
-.block-language-daggerheart + .edit-block-button {
-    opacity: var(--icon-opacity) !important;
+.markdown-reading-view .block-language-daggerheart + .edit-block-button,
+.markdown-preview-view .block-language-daggerheart + .edit-block-button,
+.markdown-source-view .block-language-daggerheart + .edit-block-button {
+    opacity: var(--icon-opacity);
 }
 
 /* Folder picker modal */

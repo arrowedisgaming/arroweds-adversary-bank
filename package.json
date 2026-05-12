@@ -1,22 +1,32 @@
 {
 	"name": "arroweds-adversary-bank",
-	"version": "1.7.1",
+	"version": "1.7.2",
+	"packageManager": "pnpm@10.32.1",
 	"description": "Manage and run Daggerheart TTRPG encounters with searchable adversary stat blocks, condition tracking, and instance management.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+		"typecheck": "tsc -noEmit -skipLibCheck",
+		"lint:ts": "eslint \"src/**/*.ts\" --max-warnings=0",
+		"lint:css": "node scripts/check-css.mjs",
+		"lint": "pnpm run lint:ts && pnpm run lint:css",
+		"build": "pnpm run typecheck && node esbuild.config.mjs production",
+		"check": "pnpm run typecheck && pnpm run lint && pnpm run build"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
 		"@airjp73/dice-notation": "^2.2.2",
+		"@eslint/js": "^9.30.1",
 		"@types/node": "^24.0.0",
-		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
+		"eslint": "^9.30.1",
+		"eslint-plugin-obsidianmd": "^0.3.0",
+		"globals": "^17.6.0",
 		"obsidian": "latest",
 		"tslib": "^2.4.0",
-		"typescript": "^5.4.0"
+		"typescript": "^5.4.0",
+		"typescript-eslint": "^8.59.3"
 	}
 }

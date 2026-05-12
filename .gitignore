@@ -22,3 +22,8 @@ data.json
 .DS_Store
 
 TODO
+
+# Local scratch directories — not part of the plugin
+beastvault-old/
+obsidian-releases/
+beast vault fork *.md
