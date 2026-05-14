@@ -3,12 +3,28 @@ import { SettingTab, type PluginSettings, DEFAULT_SETTINGS } from './settings';
 import { ADV_LIBRARY, ENV_LIBRARY, ADV_TEMPLATE, ENV_TEMPLATE, isRecord, toRawAdversary, toRawAdversaries, walkFolder, tryParseYaml } from './utils';
 import { AdversaryCard, AdversaryModal, type RawAdversary } from './ui';
 
+export type InstanceOverrides = {
+    hp?: number;
+    stress?: number;
+    attack?: string;
+    difficulty?: string;
+    weapon?: string;
+    damage?: string;
+    range?: string;
+    motives?: string;
+    tier?: number;
+    type?: string;
+    desc?: string;
+    thresholds?: number[];
+};
+
 export type PluginState = {
     settings: PluginSettings;
     cards: {
         [id: string]: {
             color?: string;
             count?: number;
+            overrides?: InstanceOverrides;
             [index: number]: {
                 hp?: number;
                 stress?: number;
@@ -456,7 +472,7 @@ export default class BeastVault extends Plugin {
     }
 
     updateCard(keys: (string | number)[], value: string | number) {
-        type Data = { [key: string]: Data | number | string | string[] };
+        type Data = { [key: string]: Data | number | string | string[] | number[] };
         let data: Data = this.state.cards;
         const keysCopy = [...keys];
         const lastKey = keysCopy.pop()!;
@@ -469,7 +485,7 @@ export default class BeastVault extends Plugin {
     }
 
     getCardState(keys: (string | number)[]): number | undefined {
-        type Data = { [key: string]: Data | string | number | string[] }
+        type Data = { [key: string]: Data | string | number | string[] | number[] }
         let data: Data = this.state.cards;
         for (const [i, key] of keys.entries()) {
             if (!data[key]) return undefined;

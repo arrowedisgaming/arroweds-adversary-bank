@@ -1,7 +1,7 @@
 {
 	"id": "arroweds-adversary-bank",
 	"name": "Arrowed's Adversary Bank",
-	"version": "1.7.5",
+	"version": "1.8.0",
 	"minAppVersion": "1.9.14",
 	"description": "Manage and run Daggerheart TTRPG encounters with searchable adversary stat blocks, condition tracking, and instance management.",
 	"author": "Arrowed",

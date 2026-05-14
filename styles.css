@@ -30,6 +30,7 @@ input[type=checkbox].bv-slot {
 .bv-statblock .bv-thresholds {
     text-align: center;
     margin-bottom: 0.2em;
+    position: relative;
 }
 
 .bv-threshold-btn {
@@ -107,8 +108,75 @@ input[type=checkbox].bv-slot {
     top: 56px;
 }
 
+.bv-lower-3 {
+    top: 82px;
+}
+
 .bv-invisible {
     display: none;
+}
+
+/* Active state for the corner edit pencil when overrides exist */
+button.bv-top-corner.bv-corner-edit-active {
+    color: rgb(var(--callout-color));
+    opacity: 0.95;
+}
+
+/* Per-instance header row: name on the left, reset icon on the right */
+.bv-statblock .bv-instance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+    min-height: 1.6em;
+}
+
+.bv-instance-row-name {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.bv-instance-reset {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6em;
+    height: 1.6em;
+    padding: 0;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.bv-instance-reset:hover,
+.bv-instance-reset:active {
+    opacity: 1;
+    color: var(--text-error);
+}
+
+.bv-instance-reset .svg-icon {
+    width: 0.95em;
+    height: 0.95em;
+}
+
+/* Overlay placement: reset button sits flush-right on the threshold row, vertically
+   centered alongside MINOR/MAJOR/SEVERE so the row doesn't earn extra vertical space. */
+.bv-statblock .bv-thresholds .bv-instance-reset-overlay {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Fallback row (no thresholds present): right-align the reset so it doesn't sprawl. */
+.bv-instance-row-noname {
+    justify-content: flex-end;
 }
 
 .bv-statblock .bv-feature p {
@@ -374,4 +442,74 @@ input[type=checkbox].bv-slot {
 .bv-folder-setting-name {
     font-family: monospace;
     font-size: 13px;
+}
+
+/* Visual cue for any header value that's currently overridden */
+.bv-overridden {
+    border-bottom: 1px dotted rgba(var(--callout-color), 0.7);
+}
+
+/* Edit modal */
+.bv-edit-modal h3 {
+    margin-top: 0;
+}
+
+.bv-edit-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.bv-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bv-edit-label {
+    flex: 0 0 9em;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.bv-edit-input-wrap {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+}
+
+.bv-edit-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-modifier-form-field);
+    color: var(--text-normal);
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.bv-edit-reset {
+    flex: 0 0 auto;
+    width: 2em;
+    padding: 2px 6px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.bv-edit-reset:hover,
+.bv-edit-reset:active {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.bv-edit-footer .setting-item {
+    border: none;
+    padding-top: 8px;
 }

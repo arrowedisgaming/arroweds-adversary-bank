@@ -1,6 +1,6 @@
 import { App, Editor, SuggestModal, Modal, Setting, Notice, MarkdownRenderChild, stringifyYaml, setIcon, MarkdownRenderer, Menu, Platform, type MarkdownPostProcessorContext } from 'obsidian';
 import { roll } from '@airjp73/dice-notation';
-import BeastVault, { type PluginState } from './main';
+import BeastVault, { type InstanceOverrides, type PluginState } from './main';
 import { hexToRgb, DICE_PATTERN, processAdversary, DH_CONDITIONS, autoSuffixName } from './utils';
 
 interface DiceRollerElement {
@@ -282,6 +282,90 @@ export class AdversaryCard extends MarkdownRenderChild {
         return card[index];
     }
 
+    getOverrides(): InstanceOverrides | undefined {
+        return this.plugin.state.cards[this.adv.id]?.overrides;
+    }
+
+    isOverridden<K extends keyof InstanceOverrides>(field: K): boolean {
+        return this.getOverrides()?.[field] !== undefined;
+    }
+
+    getField<K extends keyof InstanceOverrides & keyof Adversary>(field: K): Adversary[K] {
+        const overrides = this.getOverrides();
+        if (overrides && overrides[field] !== undefined) {
+            return overrides[field] as Adversary[K];
+        }
+        return this.adv[field];
+    }
+
+    /**
+     * Clamp every instance's HP and stress marks against the current effective max.
+     * Run after any change that can lower the effective max — setting a lower override,
+     * clearing a higher override (so the library value re-takes effect), or resetting
+     * all overrides.
+     */
+    private clampAllMarks() {
+        const card = this.plugin.state.cards[this.adv.id];
+        if (!card) return;
+        const effHp = this.getField('hp');
+        const effStress = this.getField('stress');
+        for (const key of Object.keys(card)) {
+            const n = Number(key);
+            if (!Number.isInteger(n) || n < 0) continue;
+            const inst = card[n];
+            if (!inst) continue;
+            if ((inst.hp ?? 0) > effHp) inst.hp = effHp;
+            if ((inst.stress ?? 0) > effStress) inst.stress = effStress;
+        }
+    }
+
+    setOverrides(partial: InstanceOverrides) {
+        const card = this.ensureCardState();
+        const next: InstanceOverrides = { ...(card.overrides ?? {}) };
+        for (const k of Object.keys(partial) as (keyof InstanceOverrides)[]) {
+            const v = partial[k];
+            if (v === undefined) {
+                delete next[k];
+            } else {
+                (next as Record<string, unknown>)[k] = v;
+            }
+        }
+        if (Object.keys(next).length === 0) {
+            delete card.overrides;
+        } else {
+            card.overrides = next;
+        }
+        this.clampAllMarks();
+        this.plugin.updateState();
+    }
+
+    /**
+     * Reset combat state for a single instance: HP marks, stress marks, conditions,
+     * feature uses, and countdowns. Preserves instance name, count, color, and any
+     * card-level overrides (overrides reset only via the edit modal).
+     */
+    resetInstance(index: number) {
+        const inst = this.plugin.state.cards[this.adv.id]?.[index];
+        if (!inst) return;
+        delete inst.hp;
+        delete inst.stress;
+        delete inst.conditions;
+        delete inst.uses;
+        delete inst.countdown;
+        this.plugin.updateState();
+    }
+
+    /** Clear all card-level overrides; combat state on every instance is left alone. */
+    resetOverrides() {
+        const card = this.plugin.state.cards[this.adv.id];
+        if (!card?.overrides) return;
+        delete card.overrides;
+        // Library max may now be lower than what an instance had marked under the
+        // previous override; clamp before persisting.
+        this.clampAllMarks();
+        this.plugin.updateState();
+    }
+
     createTitle(card: HTMLElement) {
         const title = card.createDiv({ cls: 'callout-title bv-spreadout' });
         const nameEl = title.createEl('b', { cls: 'bv-larger bv-renameable', text: `${this.adv.name || ''}` });
@@ -351,7 +435,8 @@ export class AdversaryCard extends MarkdownRenderChild {
     private markStressOnInstance(index: number) {
         const keys: (string | number)[] = [this.adv.id, index, 'stress'];
         const current = this.plugin.getCardState(keys) ?? 0;
-        if (current >= this.adv.stress) {
+        const effStress = this.getField('stress');
+        if (current >= effStress) {
             new Notice('All stress slots already marked');
             return;
         }
@@ -363,14 +448,15 @@ export class AdversaryCard extends MarkdownRenderChild {
         const label = this.count > 1
             ? (savedName || `${this.adv.name || 'Instance'} ${index + 1}`)
             : (this.adv.name || 'Adversary');
-        new Notice(`${label}: marked stress (${current + 1}/${this.adv.stress})`);
+        new Notice(`${label}: marked stress (${current + 1}/${effStress})`);
     }
 
-    createHeaderEntry(header: HTMLElement, name: string, entry: string | string[] | undefined) {
+    createHeaderEntry(header: HTMLElement, name: string, entry: string | string[] | undefined, overridden = false) {
         const isEmpty = Array.isArray(entry) ? entry.length == 0 : entry == null || entry == '';
         if (isEmpty) return;
-        header.createEl('b', { text: `${name}: ` });
-        header.createSpan({ text: Array.isArray(entry) ? entry.join(', ') : entry });
+        const wrap = header.createSpan({ cls: overridden ? 'bv-overridden' : undefined });
+        wrap.createEl('b', { text: `${name}: ` });
+        wrap.createSpan({ text: Array.isArray(entry) ? entry.join(', ') : entry });
         header.createEl('br');
     }
 
@@ -381,33 +467,42 @@ export class AdversaryCard extends MarkdownRenderChild {
         }
 
         const header = content.createEl('p', { cls: 'bv-smaller' });
-        this.createHeaderEntry(header, 'Difficulty', this.adv.difficulty);
+        const effDifficulty = this.getField('difficulty');
+        this.createHeaderEntry(header, 'Difficulty', effDifficulty, this.isOverridden('difficulty'));
 
-        if (this.adv.attack != null) {
-            header.createEl('b', { text: 'Attack: ' });
-            const attackDice = `1d20${this.adv.attack === '0' ? '' : this.adv.attack}`;
-            await diceElement(attackDice, this.filePath, header);
+        const effAttack = this.getField('attack');
+        if (effAttack != null) {
+            const attackWrap = header.createSpan({ cls: this.isOverridden('attack') ? 'bv-overridden' : undefined });
+            attackWrap.createEl('b', { text: 'Attack: ' });
+            const attackDice = `1d20${effAttack === '0' ? '' : effAttack}`;
+            await diceElement(attackDice, this.filePath, attackWrap);
             header.createEl('br');
         }
 
-        if (this.adv.weapon || this.adv.range || this.adv.damage) {
-            header.createEl('b', { text: `${this.adv.weapon || 'Weapon'}: ` })
-            header.createSpan({ text: this.adv.range || '' })
-            header.createSpan({ text: (this.adv.range && this.adv.damage) ? ' | ' : '' });
-            if (this.adv.damage) {
+        const effWeapon = this.getField('weapon');
+        const effRange = this.getField('range');
+        const effDamage = this.getField('damage');
+        if (effWeapon || effRange || effDamage) {
+            const weaponWrap = header.createSpan({
+                cls: (this.isOverridden('weapon') || this.isOverridden('range') || this.isOverridden('damage')) ? 'bv-overridden' : undefined,
+            });
+            weaponWrap.createEl('b', { text: `${effWeapon || 'Weapon'}: ` });
+            weaponWrap.createSpan({ text: effRange || '' });
+            weaponWrap.createSpan({ text: (effRange && effDamage) ? ' | ' : '' });
+            if (effDamage) {
                 const isDice = new RegExp(DICE_PATTERN.source);
-                for (const part of this.adv.damage.split(DICE_PATTERN)) {
+                for (const part of effDamage.split(DICE_PATTERN)) {
                     if (isDice.test(part)) {
-                        await diceElement(part, this.filePath, header);
+                        await diceElement(part, this.filePath, weaponWrap);
                     } else {
-                        header.createSpan({ text: part });
+                        weaponWrap.createSpan({ text: part });
                     }
                 }
             }
             header.createEl('br');
         }
         this.createHeaderEntry(header, 'Experience', this.adv.xp);
-        this.createHeaderEntry(header, 'Motives & Tactics', this.adv.motives);
+        this.createHeaderEntry(header, 'Motives & Tactics', this.getField('motives'), this.isOverridden('motives'));
         this.createHeaderEntry(header, 'Tone & Feel', this.adv.tone);
         this.createHeaderEntry(header, 'Impulses', this.adv.impulses);
         this.createHeaderEntry(header, 'Potential Adversaries', this.adv.adversaries);
@@ -676,16 +771,18 @@ export class AdversaryCard extends MarkdownRenderChild {
 
     createThresholdButtons(content: HTMLElement) {
         let minor, major, severe, massive;
-        if (this.adv.thresholds.length > 0) {
+        const effThresholds = this.getField('thresholds');
+        if (effThresholds.length > 0) {
             const thresholds = content.createEl('p', { cls: 'bv-thresholds' });
+            if (this.isOverridden('thresholds')) thresholds.addClass('bv-overridden');
             minor = thresholds.createEl('button', { text: 'MINOR', cls: 'bv-threshold-btn' });
-            thresholds.createSpan({ text: ` ${this.adv.thresholds[0]} ` });
+            thresholds.createSpan({ text: ` ${effThresholds[0]} ` });
             major = thresholds.createEl('button', { text: 'MAJOR', cls: 'bv-threshold-btn' });
-            if (this.adv.thresholds.length > 1) {
-                thresholds.createSpan({ text: ` ${this.adv.thresholds[1]} ` });
+            if (effThresholds.length > 1) {
+                thresholds.createSpan({ text: ` ${effThresholds[1]} ` });
                 severe = thresholds.createEl('button', { text: 'SEVERE', cls: 'bv-threshold-btn' });
                 if (this.plugin.state.settings.showMassiveThreshold) {
-                    thresholds.createSpan({ text: ` ${this.adv.thresholds?.[2] || 2 * this.adv.thresholds[1]} ` });
+                    thresholds.createSpan({ text: ` ${effThresholds?.[2] || 2 * effThresholds[1]} ` });
                     massive = thresholds.createEl('button', { text: 'MASSIVE', cls: 'bv-threshold-btn' });
                 }
             }
@@ -696,14 +793,32 @@ export class AdversaryCard extends MarkdownRenderChild {
     createStatBar(content: HTMLElement, index: number) {
         const statBar = content.createEl('p');
 
-        // Per-instance name label when count > 1
+        // Build the per-instance reset button up front; placement depends on layout
+        // (alongside the instance name when count>1, otherwise overlaid on the
+        // threshold row so it sits on the same horizontal line as MINOR/MAJOR/SEVERE).
+        const resetBtn = createEl('button', {
+            cls: 'clickable-icon bv-instance-reset',
+            attr: { 'aria-label': `Reset combat state for ${this.count > 1 ? `instance ${index + 1}` : 'this stat block'}` },
+        });
+        setIcon(resetBtn, 'rotate-ccw');
+        resetBtn.addEventListener('click', () => {
+            this.resetInstance(index);
+            void this.render();
+            this.plugin.updateStatusBar();
+        });
+
+        // Per-instance name + reset row (only when count > 1, otherwise the name slot
+        // is empty and would just create vertical dead space)
         if (this.count > 1) {
+            const headerRow = statBar.createDiv({ cls: 'bv-instance-row' });
+            const nameSlot = headerRow.createDiv({ cls: 'bv-instance-row-name' });
+
             const cardState = this.plugin.state.cards[this.adv.id];
             const savedName = cardState?.[index]?.instanceName;
             const defaultName = `${this.adv.name || 'Instance'} ${index + 1}`;
             const displayName = savedName || defaultName;
 
-            const nameEl = statBar.createEl('b', {
+            const nameEl = nameSlot.createEl('b', {
                 text: displayName,
                 cls: 'bv-instance-name',
             });
@@ -735,12 +850,30 @@ export class AdversaryCard extends MarkdownRenderChild {
                 input.addEventListener('blur', commit);
             });
 
-            statBar.createEl('br');
+            headerRow.appendChild(resetBtn);
         }
 
         const [minor, major, severe, massive] = this.createThresholdButtons(statBar);
-        const hpSlots = this.createStatSlots(statBar, 'HP', this.adv.hp, [this.adv.id, index, 'hp'], true);
-        this.createStatSlots(statBar, 'Stress', this.adv.stress, [this.adv.id, index, 'stress'], true);
+
+        // For single-instance cards, overlay the reset button on the threshold row so
+        // it lands on the same horizontal line as MINOR/MAJOR/SEVERE.
+        if (this.count === 1) {
+            const thresholdRow = statBar.querySelector<HTMLElement>('.bv-thresholds');
+            if (thresholdRow) {
+                resetBtn.addClass('bv-instance-reset-overlay');
+                thresholdRow.appendChild(resetBtn);
+            } else {
+                // No thresholds rendered (envs / unusual homebrew); fall back to a small
+                // right-aligned standalone placement so the button stays reachable.
+                const fallback = statBar.createDiv({ cls: 'bv-instance-row bv-instance-row-noname' });
+                fallback.appendChild(resetBtn);
+            }
+        }
+
+        const effHp = this.getField('hp');
+        const effStress = this.getField('stress');
+        const hpSlots = this.createStatSlots(statBar, 'HP', effHp, [this.adv.id, index, 'hp'], true);
+        this.createStatSlots(statBar, 'Stress', effStress, [this.adv.id, index, 'stress'], true);
 
         // Condition badges for adversaries only (not environments)
         if (this.adv.hp || this.adv.stress) {
@@ -760,13 +893,13 @@ export class AdversaryCard extends MarkdownRenderChild {
         let hordeSize: HTMLElement | null = null;
         let updateHordeSize: (() => void) | null = null;
         const match = this.adv.type?.match(/^horde\s+\((\d+)\/hp\)$/i);
-        if (match && this.adv.hp > 0) {
+        if (match && effHp > 0) {
             hordeSize = statBar.createSpan({ cls: "bv-muted" });
             updateHordeSize = () => {
                 if (hordeSize == null) return;
                 const size = parseInt(match[1]);
                 const hp = this.plugin.getCardState([this.adv.id, index, 'hp']) ?? 0;
-                const currentHP = this.adv.hp - hp;
+                const currentHP = effHp - hp;
                 hordeSize.innerText = `Horde size: ${size * currentHP}`;
             };
             updateHordeSize();
@@ -813,6 +946,14 @@ export class AdversaryCard extends MarkdownRenderChild {
 
     createPlusMinosButtons(card: HTMLElement, features: HTMLElement, statBlock: HTMLElement) {
         if (!this.adv.hp && !this.adv.stress) return;
+
+        const edit = card.createEl('button', {
+            cls: 'bv-top-corner clickable-icon bv-invisible',
+            attr: { 'aria-label': 'Edit stat block overrides' },
+        });
+        setIcon(edit, 'pencil');
+        if (this.getOverrides()) edit.addClass('bv-corner-edit-active');
+
         const add = card.createEl('button', {
             cls: 'bv-top-corner clickable-icon bv-invisible',
             attr: { 'aria-label': 'Increase adversary count' }
@@ -828,11 +969,15 @@ export class AdversaryCard extends MarkdownRenderChild {
         window.setTimeout(() => {
             const editable = card.parentElement?.nextElementSibling?.classList.contains('edit-block-button');
             if (editable) {
+                // Obsidian's edit-block-button takes the top slot
+                edit.addClass('bv-lower-1');
+                add.addClass('bv-lower-2');
+                remove.addClass('bv-lower-3');
+            } else {
                 add.addClass('bv-lower-1');
                 remove.addClass('bv-lower-2');
-            } else {
-                remove.addClass('bv-lower-1');
             }
+            edit.removeClass('bv-invisible');
             add.removeClass('bv-invisible');
             remove.removeClass('bv-invisible');
         }, 5);
@@ -843,6 +988,10 @@ export class AdversaryCard extends MarkdownRenderChild {
             await this.createFeaturesAndStats(features, statBlock);
             this.plugin.updateStatusBar();
         };
+
+        edit.addEventListener('click', () => {
+            new AdversaryEditModal(this.plugin.app, this, () => void this.render()).open();
+        });
 
         add.addEventListener('click', () => {
             this.count += 1;
@@ -889,7 +1038,7 @@ export class AdversaryCard extends MarkdownRenderChild {
 
             // "Mark a Stress" clickable action
             if (elt.classList.contains('bv-mark-stress')) {
-                if (this.adv.stress <= 0) return;
+                if (this.getField('stress') <= 0) return;
                 if (this.count === 1) {
                     this.markStressOnInstance(0);
                 } else {
@@ -948,5 +1097,184 @@ export class AdversaryCard extends MarkdownRenderChild {
                 this.plugin.updateCard([this.adv.id, 'color'], colorpicker.value);
             })
         }
+    }
+}
+
+function normalizeAttack(input: string): string | undefined {
+    const trimmed = input.trim();
+    if (trimmed === '') return undefined;
+    const n = Number(trimmed);
+    if (Number.isFinite(n)) return n > 0 ? `+${n}` : `${n}`;
+    return trimmed;
+}
+
+function parseThresholds(input: string): number[] | undefined {
+    const trimmed = input.trim();
+    if (trimmed === '') return undefined;
+    const parts = trimmed.split(/[,/]/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+    // Explicit "none" (matches the YAML parser convention) persists as an empty
+    // override — distinct from blank input, which clears the override.
+    if (parts.length > 0 && parts.every(p => p.toLowerCase() === 'none')) return [];
+    const parsed = parts
+        .filter(p => p.toLowerCase() !== 'none')
+        .map(s => parseInt(s, 10))
+        .filter(n => Number.isFinite(n));
+    return parsed.length > 0 ? parsed : undefined;
+}
+
+function parsePositiveInt(input: string): number | undefined {
+    const trimmed = input.trim();
+    if (trimmed === '') return undefined;
+    const n = parseInt(trimmed, 10);
+    return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
+export class AdversaryEditModal extends Modal {
+    private overrides: InstanceOverrides;
+
+    constructor(
+        app: App,
+        private card: AdversaryCard,
+        private onChange: () => void,
+    ) {
+        super(app);
+        this.overrides = { ...(this.card.getOverrides() ?? {}) };
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('bv-edit-modal');
+
+        contentEl.createEl('h3', { text: `Edit ${this.card.adv.name || 'stat block'}` });
+        contentEl.createEl('p', {
+            text: 'Overrides are stored in plugin state and apply to every instance of this card. The library entry is untouched.',
+            cls: 'bv-muted bv-smaller',
+        });
+
+        const grid = contentEl.createDiv({ cls: 'bv-edit-grid' });
+
+        const addRow = <K extends keyof InstanceOverrides>(
+            label: string,
+            field: K,
+            libraryValue: string,
+            currentValueAsText: () => string,
+            parseInput: (raw: string) => InstanceOverrides[K] | undefined,
+        ) => {
+            const row = grid.createDiv({ cls: 'bv-edit-row' });
+            row.createEl('label', { text: label, cls: 'bv-edit-label' });
+            const inputWrap = row.createDiv({ cls: 'bv-edit-input-wrap' });
+            const input = inputWrap.createEl('input', {
+                type: 'text',
+                cls: 'bv-edit-input',
+                value: currentValueAsText(),
+                attr: { placeholder: libraryValue || '—' },
+            });
+            const resetBtn = inputWrap.createEl('button', {
+                cls: 'bv-edit-reset',
+                attr: { 'aria-label': `Reset ${label}` },
+                text: '↺',
+            });
+            input.addEventListener('input', () => {
+                const parsed = parseInput(input.value);
+                if (parsed === undefined) {
+                    delete this.overrides[field];
+                } else {
+                    this.overrides[field] = parsed;
+                }
+            });
+            resetBtn.addEventListener('click', () => {
+                input.value = '';
+                delete this.overrides[field];
+            });
+        };
+
+        const adv = this.card.adv;
+        addRow('Max HP', 'hp',
+            adv.hp ? String(adv.hp) : '',
+            () => this.overrides.hp !== undefined ? String(this.overrides.hp) : '',
+            (raw) => parsePositiveInt(raw));
+        addRow('Max Stress', 'stress',
+            adv.stress ? String(adv.stress) : '',
+            () => this.overrides.stress !== undefined ? String(this.overrides.stress) : '',
+            (raw) => parsePositiveInt(raw));
+        addRow('Thresholds', 'thresholds',
+            adv.thresholds.length > 0 ? adv.thresholds.join(', ') : 'none',
+            () => {
+                const t = this.overrides.thresholds;
+                if (t === undefined) return '';
+                return t.length === 0 ? 'none' : t.join(', ');
+            },
+            (raw) => parseThresholds(raw));
+        addRow('Attack', 'attack',
+            adv.attack ?? '',
+            () => this.overrides.attack ?? '',
+            (raw) => normalizeAttack(raw));
+        addRow('Difficulty', 'difficulty',
+            adv.difficulty ?? '',
+            () => this.overrides.difficulty ?? '',
+            (raw) => raw.trim() === '' ? undefined : raw.trim());
+        addRow('Weapon', 'weapon',
+            adv.weapon ?? '',
+            () => this.overrides.weapon ?? '',
+            (raw) => raw.trim() === '' ? undefined : raw.trim());
+        addRow('Range', 'range',
+            adv.range ?? '',
+            () => this.overrides.range ?? '',
+            (raw) => raw.trim() === '' ? undefined : raw.trim());
+        addRow('Damage', 'damage',
+            adv.damage ?? '',
+            () => this.overrides.damage ?? '',
+            (raw) => raw.trim() === '' ? undefined : raw.trim());
+        addRow('Motives & Tactics', 'motives',
+            adv.motives ?? '',
+            () => this.overrides.motives ?? '',
+            (raw) => raw.trim() === '' ? undefined : raw.trim());
+
+        const footer = contentEl.createDiv({ cls: 'bv-edit-footer' });
+        new Setting(footer)
+            .addButton(btn => btn
+                .setButtonText('Reset all customizations')
+                .setWarning()
+                .onClick(() => {
+                    this.card.resetOverrides();
+                    this.onChange();
+                    this.close();
+                }))
+            .addButton(btn => btn
+                .setButtonText('Cancel')
+                .onClick(() => this.close()))
+            .addButton(btn => btn
+                .setButtonText('Save')
+                .setCta()
+                .onClick(() => {
+                    this.save();
+                }));
+    }
+
+    private save() {
+        // Build a full replacement: include current values, and use sentinel `undefined`
+        // for any library-field the user didn't override. setOverrides treats undefined as "clear".
+        const replacement: InstanceOverrides = {
+            hp: undefined,
+            stress: undefined,
+            thresholds: undefined,
+            attack: undefined,
+            difficulty: undefined,
+            weapon: undefined,
+            damage: undefined,
+            range: undefined,
+            motives: undefined,
+            ...this.overrides,
+        };
+        this.card.setOverrides(replacement);
+        this.onChange();
+        this.close();
+    }
+
+    onClose() {
+        this.contentEl.empty();
     }
 }

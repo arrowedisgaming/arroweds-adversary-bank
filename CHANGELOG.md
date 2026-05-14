@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-05-14
+
+### Added
+
+- Stat block overrides. Each rendered adversary card has a pencil icon in the top-right corner that opens an edit modal for adjusting Max HP, Max Stress, Thresholds, Attack, Difficulty, Weapon, Range, Damage, and Motives & Tactics mid-session without editing the YAML in the code block. Overrides are stored in plugin state — the library entry is never mutated — and survive vault reloads. Overridden values replace the library values in-place in the card header and are marked with a dotted underline. HP/Stress marks are clamped across all instances when the effective max drops (either by setting a lower override or by clearing an override that previously raised the max). A "Reset all customizations" button in the modal footer reverts every overridden field back to the library value.
+- Per-instance reset button. Each instance's stat bar has a small reset icon at the top-right that clears that instance's HP marks, stress marks, conditions, feature uses, and feature countdowns. Customizations stay intact (they reset only from inside the edit modal), so a GM can fully refresh one creature in a multi-instance encounter without disturbing the rest.
+
 ## [1.7.5] - 2026-05-13
 
 ### Changed
