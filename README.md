@@ -1,65 +1,40 @@
 # Arrowed's Adversary Bank
 
-An [Obsidian.md](https://obsidian.md) plugin for Daggerheart TTRPG GMs to search, edit, and create adversary & environment stat blocks with enhanced encounter management.
+An [Obsidian.md](https://obsidian.md) plugin that turns your campaign notes into a live Daggerheart encounter table. Search the SRD or your homebrew library, drop adversaries and environments straight into the page you're already writing in, then run the fight from the same note — HP, stress, conditions, and all.
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/arrowedisgaming)
 
-**A fork of [BeastVault](https://github.com/ly0va/beastvault) by [Lyova Potyomkin](https://github.com/ly0va)**, with additional features for running encounters at the table.
+![Arrowed's Adversary Bank: a rendered Daggerheart stat block embedded in an Obsidian note](docs/images/hero.png)
 
-## What's New (over BeastVault)
+## Features
 
-- **Adversary Renaming** — auto-suffix duplicate names on insert ("Bladed Guard 2", "Bladed Guard 3"), plus double-click any rendered name to rename it inline
-- **Instance Naming** — when running multiple copies of an adversary, each instance gets a label you can click to customize ("Left Chimera", "Wounded One")
-- **Condition Tracking** — toggle Daggerheart conditions (Vulnerable, Restrained, Frightened, etc.) per instance, with support for custom conditions via YAML or the "+" button
-- **Summon Buttons** — features with a `summon` field get a button that inserts the referenced adversary into the document
-- **Clickable "Mark a Stress"** — the text in feature descriptions becomes an interactive button; for multi-instance adversaries, a picker lets you choose which one takes the stress
-- **HP/Stress Controls** — +, -, and clear buttons on every HP and Stress row for quick adjustments
+### The whole SRD, ready to drop in
 
-## Original BeastVault Features
+![Command palette open with the insert-from-library picker, filtered by name](docs/images/feature-library.png)
 
-All original BeastVault features are fully preserved:
+Every adversary and every environment from the Daggerheart SRD, one command away. Hit `Ctrl+P`, type a name, and the stat block lands in the note you're already in. Drop your own homebrew folder in and it shows up in the same picker — no separate workflow for your custom stuff. Works in Obsidian Canvas too, so you can lay out an encounter visually and run it from the canvas.
 
-- Search and insert adversaries & environments from the SRD via commands
-- Render editable stat blocks with intuitive UI
-- Roll dice for attack or damage with one click
-- Track marked HP, stress, countdowns and feature uses
-- Battle points counted in the status bar
-- Customizable colors for any theme
-- Works in a canvas for [FCG](https://freshcutgrass.app)-style encounter building
-- Local homebrew library support with folder scanning
-- FSB (Fantasy Statblocks) compatibility
+### Track everything live, per instance
+
+![Stat block mid-encounter with HP and stress marked, several conditions toggled on](docs/images/feature-tracking.png)
+
+HP, stress, conditions, feature uses, countdowns — all tracked right on the stat block. Mark a threshold with a click, clear it with Alt-click. Running two Bladed Guards or six skeletons from a single block? Each instance keeps its own state and its own name. Toggle the eight standard Daggerheart conditions on any instance, or define your own — "Burning," "Marked by the Hunter," whatever the table needs.
+
+### Stat blocks that work like tools
+
+![Feature description with a clickable "Mark a Stress" trigger and a visible summon button](docs/images/feature-interactive.png)
+
+Click an attack bonus to roll it. Click "Mark a Stress" inside a feature description and it actually marks one — and if there are several copies in play, a picker asks which one takes it. A feature that summons reinforcements gets a button that drops the named adversary into the note. The battle points counter in the status bar keeps a running total so you know exactly what the encounter costs. Less flipping between pages, more time running the scene.
 
 ## Installation
 
-### Manual
-
-1. Go to the [latest release](https://github.com/arrowedisgaming/arroweds-adversary-bank/releases/latest)
-2. Download `main.js`, `manifest.json` and `styles.css`
-3. Inside your Obsidian vault, create folder `.obsidian/plugins/arroweds-adversary-bank`
-4. Copy the downloaded files to this folder
-5. If Obsidian was open, restart it
-6. Navigate to `Settings` > `Community plugins` and enable Arrowed's Adversary Bank
-
-### Release provenance
-
-Release assets are built by GitHub Actions and published with GitHub artifact attestations. To verify a downloaded asset, install the GitHub CLI and run:
-
-```bash
-gh attestation verify main.js -R arrowedisgaming/arroweds-adversary-bank
-gh attestation verify styles.css -R arrowedisgaming/arroweds-adversary-bank
-```
-
-### Via [BRAT](https://github.com/TfTHacker/obsidian42-brat)
-
-1. Install the [BRAT](obsidian://show-plugin?id=obsidian42-brat) plugin from the community plugins browser
-2. Navigate to BRAT settings and click `Add beta plugin`
-3. Enter `arrowedisgaming/arroweds-adversary-bank` as the repository and click `Add plugin`
+Open Obsidian, go to `Settings` > `Community plugins`, click `Browse`, and search for **Arrowed's Adversary Bank**. Or install it directly from the [Obsidian plugin directory](https://obsidian.md/plugins?id=arroweds-adversary-bank).
 
 ## Usage
 
 ### Insert from Library
 
-Insert an adversary via a command: `Ctrl+P` > `Insert adversary from library`, or use the side ribbon menu (sword icon).
+Insert an adversary via a command: `Ctrl+P` > `Insert adversary from library`, or use the side ribbon menu (crossed-swords icon).
 
 > [!TIP]
 > Bind plugin commands to hotkeys from the Hotkeys settings tab.
@@ -162,9 +137,34 @@ All properties are optional and simply won't render if skipped.
 > [!IMPORTANT]
 > Do not use `TAB` in stat blocks. The indents for features must be manually indented with spaces.
 
+### Alt install method
+
+<details>
+<summary>Manual install</summary>
+
+1. Go to the [latest release](https://github.com/arrowedisgaming/arroweds-adversary-bank/releases/latest)
+2. Download `main.js`, `manifest.json` and `styles.css`
+3. Inside your Obsidian vault, create folder `.obsidian/plugins/arroweds-adversary-bank`
+4. Copy the downloaded files to this folder
+5. If Obsidian was open, restart it
+6. Navigate to `Settings` > `Community plugins` and enable Arrowed's Adversary Bank
+</details>
+
+<details>
+<summary>Release provenance</summary>
+
+Release assets are built by GitHub Actions and published with GitHub artifact attestations. To verify a downloaded asset, install the GitHub CLI and run:
+
+```bash
+gh attestation verify main.js -R arrowedisgaming/arroweds-adversary-bank
+gh attestation verify styles.css -R arrowedisgaming/arroweds-adversary-bank
+```
+</details>
+
+
 ## Attributions
 
-This plugin is a fork of [BeastVault](https://github.com/ly0va/beastvault) by [Lyova Potyomkin](https://github.com/ly0va), licensed under the [MIT License](LICENSE). The original BeastVault was inspired by [FreshCutGrass](https://freshcutgrass.app) and [DaggerForge](https://github.com/Torutu/daggerforge).
+Arrowed's Adversary Bank began as a fork of [BeastVault](https://github.com/ly0va/beastvault) by [Lyova Potyomkin](https://github.com/ly0va), licensed under the [MIT License](LICENSE). The original BeastVault was inspired by [FreshCutGrass](https://freshcutgrass.app) and [DaggerForge](https://github.com/Torutu/daggerforge).
 
 ### Copyright Notice
 

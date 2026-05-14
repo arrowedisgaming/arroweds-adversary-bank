@@ -1,6 +1,6 @@
 {
 	"name": "arroweds-adversary-bank",
-	"version": "1.7.4",
+	"version": "1.7.5",
 	"packageManager": "pnpm@10.32.1",
 	"description": "Manage and run Daggerheart TTRPG encounters with searchable adversary stat blocks, condition tracking, and instance management.",
 	"main": "main.js",

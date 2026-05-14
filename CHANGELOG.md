@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [1.7.5] - 2026-05-13
+
+### Changed
+
+- Rewrote `README.md` to lead with GM-facing utility rather than fork-vs-original framing: replaced the "What's New" / "Original BeastVault Features" split with a single Features section organized around library, live tracking, and interactive stat blocks; added hero and per-feature screenshots under `docs/images/`; reduced Installation to a single sentence pointing at the Obsidian community plugin directory; removed the BRAT install option; moved manual install and release-provenance instructions into collapsed `<details>` blocks below the Reference section. BeastVault attribution preserved in the Attributions section per the MIT License.
+
 ## [1.7.4] - 2026-05-12
 
 ### Fixed
