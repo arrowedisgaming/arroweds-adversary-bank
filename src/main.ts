@@ -417,7 +417,7 @@ export default class BeastVault extends Plugin {
             callback: () => void this.scanLibrary(true, 'yes')
         })
 
-        this.addRibbonIcon('swords', "Arrowed's Adversary Bank", (event) => {
+        this.addRibbonIcon('swords', "Arroweds Adversary Bank", (event) => {
             const menu = new Menu();
             const onClick = (callback: (editor: Editor) => void) => () => {
                 const editor = this.app.workspace.activeEditor?.editor;

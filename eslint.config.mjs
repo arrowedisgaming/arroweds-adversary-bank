@@ -40,7 +40,7 @@ export default tseslint.config(
 				"error",
 				{
 					acronyms: [...DEFAULT_ACRONYMS, "SRD", "FSB"],
-					brands: [...DEFAULT_BRANDS, "Fantasy Statblocks", "Arrowed's Adversary Bank"],
+					brands: [...DEFAULT_BRANDS, "Fantasy Statblocks", "Arroweds Adversary Bank"],
 				},
 			],
 		},

@@ -1,4 +1,4 @@
-# Changelog — Arrowed's Adversary Bank
+# Changelog — Arroweds Adversary Bank
 
 All notable changes to this project will be documented in this file.
 
@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [1.8.1] - 2026-05-27
+
+### Changed
+
+- Renamed plugin to "Arroweds Adversary Bank" (removed the apostrophe from "Arrowed's") to comply with Obsidian community directory naming guidelines, which prohibit punctuation other than hyphens. The plugin `id` (`arroweds-adversary-bank`) is unchanged, so existing installs keep all settings, customizations, and tracked instance state.
 
 ## [1.8.0] - 2026-05-14
 

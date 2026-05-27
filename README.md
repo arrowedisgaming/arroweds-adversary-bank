@@ -1,10 +1,10 @@
-# Arrowed's Adversary Bank
+# Arroweds Adversary Bank
 
 An [Obsidian.md](https://obsidian.md) plugin that turns your campaign notes into a live Daggerheart encounter table. Search the SRD or your homebrew library, drop adversaries and environments straight into the page you're already writing in, then run the fight from the same note — HP, stress, conditions, and all.
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/arrowedisgaming)
 
-![Arrowed's Adversary Bank: a rendered Daggerheart stat block embedded in an Obsidian note](docs/images/hero.png)
+![Arroweds Adversary Bank: a rendered Daggerheart stat block embedded in an Obsidian note](docs/images/hero.png)
 
 ## Features
 
@@ -28,7 +28,7 @@ Click an attack bonus to roll it. Click "Mark a Stress" inside a feature descrip
 
 ## Installation
 
-Open Obsidian, go to `Settings` > `Community plugins`, click `Browse`, and search for **Arrowed's Adversary Bank**. Or install it directly from the [Obsidian plugin directory](https://obsidian.md/plugins?id=arroweds-adversary-bank).
+Open Obsidian, go to `Settings` > `Community plugins`, click `Browse`, and search for **Arroweds Adversary Bank**. Or install it directly from the [Obsidian plugin directory](https://obsidian.md/plugins?id=arroweds-adversary-bank).
 
 ## Usage
 
@@ -147,7 +147,7 @@ All properties are optional and simply won't render if skipped.
 3. Inside your Obsidian vault, create folder `.obsidian/plugins/arroweds-adversary-bank`
 4. Copy the downloaded files to this folder
 5. If Obsidian was open, restart it
-6. Navigate to `Settings` > `Community plugins` and enable Arrowed's Adversary Bank
+6. Navigate to `Settings` > `Community plugins` and enable Arroweds Adversary Bank
 </details>
 
 <details>
@@ -164,7 +164,7 @@ gh attestation verify styles.css -R arrowedisgaming/arroweds-adversary-bank
 
 ## Attributions
 
-Arrowed's Adversary Bank began as a fork of [BeastVault](https://github.com/ly0va/beastvault) by [Lyova Potyomkin](https://github.com/ly0va), licensed under the [MIT License](LICENSE). The original BeastVault was inspired by [FreshCutGrass](https://freshcutgrass.app) and [DaggerForge](https://github.com/Torutu/daggerforge).
+Arroweds Adversary Bank began as a fork of [BeastVault](https://github.com/ly0va/beastvault) by [Lyova Potyomkin](https://github.com/ly0va), licensed under the [MIT License](LICENSE). The original BeastVault was inspired by [FreshCutGrass](https://freshcutgrass.app) and [DaggerForge](https://github.com/Torutu/daggerforge).
 
 ### Copyright Notice
 
