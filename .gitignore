@@ -30,3 +30,6 @@ beast vault fork *.md
 
 # Per-workspace Claude config and commands — stays local
 .claude/
+
+# Path to a local Obsidian test vault — machine-specific
+.dev-vault

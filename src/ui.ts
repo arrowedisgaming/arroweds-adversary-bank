@@ -46,6 +46,54 @@ async function diceElement(dice: string, sourcePath: string, parent: HTMLElement
     parent.createSpan({ text: dice, cls: 'bv-rollable' });
 }
 
+/**
+ * Characters that could begin a markdown construct we care about inline
+ * (emphasis, code, strikethrough, highlight, links, wikilinks, raw HTML, tags,
+ * HTML entities, backslash escapes). Used only to skip the renderer for plain
+ * text — a false positive costs a wasted render, never a wrong result.
+ */
+const INLINE_MARKDOWN_CHARS = /[*_`~=[\]<#&\\]/;
+
+/**
+ * Render a stat block field as inline markdown.
+ *
+ * Obsidian's renderer always emits block-level output, so a lone wrapping `<p>`
+ * is unwrapped to keep the text flowing with whatever sits beside it (labels,
+ * separators, dice). Text with no markdown-ish characters bypasses the renderer
+ * entirely: a card can hold dozens of fields and the full markdown pipeline is
+ * far more expensive than setting text directly.
+ *
+ * Surrounding whitespace is restored around the rendered output. Markdown strips
+ * it, which would run a fragment straight into its neighbour — `damage: "2d6 ==mag=="`
+ * splits into a dice roller plus the literal text `" ==mag=="`, and that leading
+ * space is the gap between them.
+ */
+async function renderInlineMarkdown(
+    plugin: BeastVault,
+    text: string,
+    parent: HTMLElement,
+    sourcePath: string,
+    component: MarkdownRenderChild,
+): Promise<void> {
+    if (!INLINE_MARKDOWN_CHARS.test(text)) {
+        parent.appendText(text);
+        return;
+    }
+
+    const [, leading, core, trailing] = /^(\s*)([\s\S]*?)(\s*)$/.exec(text) ?? ['', '', text, ''];
+    if (leading) parent.appendText(leading);
+
+    const scratch = createDiv();
+    await MarkdownRenderer.render(plugin.app, core, scratch, sourcePath, component);
+    const onlyChild = scratch.children.length === 1 ? scratch.firstElementChild : null;
+    const source = onlyChild?.tagName === 'P' ? onlyChild : scratch;
+    while (source.firstChild) {
+        parent.appendChild(source.firstChild);
+    }
+
+    if (trailing) parent.appendText(trailing);
+}
+
 type CardEntry = NonNullable<PluginState['cards'][string]>;
 type InstanceEntry = CardEntry[number];
 
@@ -112,6 +160,20 @@ function subTitle(tier?: number, type?: string) {
     return (tier ? `Tier ${tier} ` : '') + (type ? type : '');
 }
 
+/**
+ * Build a `name:` YAML line, quoted as the value requires.
+ *
+ * Names support markdown, so a perfectly ordinary rename to `**Wolf**` would be
+ * invalid YAML written literally (`*` opens an alias). Round-tripping through
+ * the serializer adds quotes only where they're needed. Folded or multi-line
+ * output is rejected — it can't be spliced into a single line — leaving the
+ * caller to skip the edit rather than corrupt the block.
+ */
+function nameLine(name: string): string | null {
+    const yaml = stringifyYaml({ name }).trimEnd();
+    return yaml.includes('\n') ? null : yaml;
+}
+
 export class AdversaryModal extends SuggestModal<RawAdversary> {
     constructor(app: App, private editor: Editor, private library: RawAdversary[]) {
         super(app);
@@ -151,8 +213,9 @@ export class AdversaryModal extends SuggestModal<RawAdversary> {
         if (adv.raw) {
             // For raw (homebrew) entries, string-replace the name: line
             inserted = adv.raw;
-            if (copy.name !== adv.name) {
-                inserted = inserted.replace(/^(name:\s*).*$/m, `$1${copy.name}`);
+            const renamed = copy.name !== adv.name ? nameLine(copy.name ?? '') : null;
+            if (renamed) {
+                inserted = inserted.replace(/^name:\s*.*$/m, renamed);
             }
         } else {
             inserted = stringifyYaml(copy);
@@ -257,6 +320,17 @@ export class FolderPickerModal extends Modal {
 export class AdversaryCard extends MarkdownRenderChild {
     count: number;
     filePath: string;
+    /**
+     * Path that links and dice resolve against.
+     *
+     * Deliberately separate from `filePath`: that one seeds the auto-generated
+     * stat block id, so repointing it would change ids and orphan tracked state
+     * on existing cards. The rendering context knows the file the code block
+     * actually lives in, which is what relative links need — `getActiveFile()`
+     * is the wrong note whenever a card renders in an embed, a canvas, or in
+     * the background.
+     */
+    private renderPath: string;
     public adv: Adversary;
 
     constructor(
@@ -267,6 +341,7 @@ export class AdversaryCard extends MarkdownRenderChild {
     ) {
         super(container);
         this.filePath = this.plugin.app.workspace.getActiveFile()?.path ?? '/';
+        this.renderPath = this.ctx?.sourcePath || this.filePath;
         this.adv = processAdversary(raw, this.filePath);
         this.count = this.plugin.state.cards[this.adv.id]?.count || 1;
     }
@@ -366,9 +441,55 @@ export class AdversaryCard extends MarkdownRenderChild {
         this.plugin.updateState();
     }
 
-    createTitle(card: HTMLElement) {
+    /** Render `text` as inline markdown into `parent`, sourced from this card's file. */
+    private inline(parent: HTMLElement, text: string): Promise<void> {
+        return renderInlineMarkdown(this.plugin, text, parent, this.renderPath, this);
+    }
+
+    /**
+     * Render `text` as inline markdown with dice notation turned into rollers.
+     *
+     * Dice become placeholder spans *before* rendering and are swapped for live
+     * rollers afterwards. Splitting the string on dice and rendering each piece
+     * separately would break any markdown spanning a dice expression —
+     * `damage: "Take *2d6 magic* damage"` would render two fragments with
+     * unmatched asterisks instead of one emphasised phrase.
+     */
+    private async inlineWithDice(parent: HTMLElement, text: string): Promise<void> {
+        const placeholderClass = getDiceRollerAPI() ? 'bv-dice-placeholder' : 'bv-rollable';
+        await this.inline(parent, text.replace(
+            DICE_PATTERN,
+            `<span class="${placeholderClass}" data-dice="$&">$&</span>`,
+        ));
+        this.swapDicePlaceholders(parent);
+    }
+
+    /** Replace rendered dice placeholders with live dice-roller elements. */
+    private swapDicePlaceholders(root: HTMLElement) {
+        const api = getDiceRollerAPI();
+        if (!api) return;
+        for (const el of Array.from(root.querySelectorAll('.bv-dice-placeholder'))) {
+            const dice = el.getAttribute('data-dice');
+            if (!dice) continue;
+            const wrapper = createSpan();
+            try {
+                const roller = api.getRoller(dice, this.renderPath);
+                if (roller) {
+                    appendDiceRoller(wrapper, roller, dice);
+                } else {
+                    wrapper.createSpan({ text: dice, cls: 'bv-rollable' });
+                }
+            } catch {
+                wrapper.createSpan({ text: dice, cls: 'bv-rollable' });
+            }
+            el.replaceWith(wrapper);
+        }
+    }
+
+    async createTitle(card: HTMLElement) {
         const title = card.createDiv({ cls: 'callout-title bv-spreadout' });
-        const nameEl = title.createEl('b', { cls: 'bv-larger bv-renameable', text: `${this.adv.name || ''}` });
+        const nameEl = title.createEl('b', { cls: 'bv-larger bv-renameable' });
+        await this.inline(nameEl, this.adv.name || '');
         title.createEl('b', { cls: 'bv-smaller bv-padded', text: subTitle(this.adv.tier, this.adv.type) });
 
         const openRenameInput = () => {
@@ -418,12 +539,18 @@ export class AdversaryCard extends MarkdownRenderChild {
         const editor = this.plugin.app.workspace.activeEditor?.editor;
         if (!sectionInfo || !editor) return;
 
+        const replacement = nameLine(newName);
+        if (replacement === null) {
+            new Notice('That name can\'t be written to YAML on one line');
+            return;
+        }
+
         const { lineStart, lineEnd } = sectionInfo;
         for (let i = lineStart; i <= lineEnd; i++) {
             const line = editor.getLine(i);
             if (/^name:\s/.test(line)) {
                 editor.replaceRange(
-                    `name: ${newName}\n`,
+                    `${replacement}\n`,
                     { line: i, ch: 0 },
                     { line: i + 1, ch: 0 }
                 );
@@ -451,31 +578,31 @@ export class AdversaryCard extends MarkdownRenderChild {
         new Notice(`${label}: marked stress (${current + 1}/${effStress})`);
     }
 
-    createHeaderEntry(header: HTMLElement, name: string, entry: string | string[] | undefined, overridden = false) {
-        const isEmpty = Array.isArray(entry) ? entry.length == 0 : entry == null || entry == '';
-        if (isEmpty) return;
+    async createHeaderEntry(header: HTMLElement, name: string, entry: string | string[] | undefined, overridden = false) {
+        const value = Array.isArray(entry) ? entry.join(', ') : entry;
+        if (!value) return;
         const wrap = header.createSpan({ cls: overridden ? 'bv-overridden' : undefined });
         wrap.createEl('b', { text: `${name}: ` });
-        wrap.createSpan({ text: Array.isArray(entry) ? entry.join(', ') : entry });
+        await this.inline(wrap.createSpan(), value);
         header.createEl('br');
     }
 
     async createHeader(content: HTMLElement) {
         if (this.adv.desc) {
             const desc = content.createEl('p', { cls: "bv-smaller bv-muted bv-padded" });
-            desc.createEl('i', { text: this.adv.desc });
+            await this.inline(desc.createEl('i'), this.adv.desc);
         }
 
         const header = content.createEl('p', { cls: 'bv-smaller' });
         const effDifficulty = this.getField('difficulty');
-        this.createHeaderEntry(header, 'Difficulty', effDifficulty, this.isOverridden('difficulty'));
+        await this.createHeaderEntry(header, 'Difficulty', effDifficulty, this.isOverridden('difficulty'));
 
         const effAttack = this.getField('attack');
         if (effAttack != null) {
             const attackWrap = header.createSpan({ cls: this.isOverridden('attack') ? 'bv-overridden' : undefined });
             attackWrap.createEl('b', { text: 'Attack: ' });
             const attackDice = `1d20${effAttack === '0' ? '' : effAttack}`;
-            await diceElement(attackDice, this.filePath, attackWrap);
+            await diceElement(attackDice, this.renderPath, attackWrap);
             header.createEl('br');
         }
 
@@ -486,33 +613,28 @@ export class AdversaryCard extends MarkdownRenderChild {
             const weaponWrap = header.createSpan({
                 cls: (this.isOverridden('weapon') || this.isOverridden('range') || this.isOverridden('damage')) ? 'bv-overridden' : undefined,
             });
-            weaponWrap.createEl('b', { text: `${effWeapon || 'Weapon'}: ` });
-            weaponWrap.createSpan({ text: effRange || '' });
+            const label = weaponWrap.createEl('b');
+            await this.inline(label, effWeapon || 'Weapon');
+            label.appendText(': ');
+            if (effRange) await this.inline(weaponWrap.createSpan(), effRange);
             weaponWrap.createSpan({ text: (effRange && effDamage) ? ' | ' : '' });
             if (effDamage) {
-                const isDice = new RegExp(DICE_PATTERN.source);
-                for (const part of effDamage.split(DICE_PATTERN)) {
-                    if (isDice.test(part)) {
-                        await diceElement(part, this.filePath, weaponWrap);
-                    } else {
-                        weaponWrap.createSpan({ text: part });
-                    }
-                }
+                await this.inlineWithDice(weaponWrap.createSpan(), effDamage);
             }
             header.createEl('br');
         }
-        this.createHeaderEntry(header, 'Experience', this.adv.xp);
-        this.createHeaderEntry(header, 'Motives & Tactics', this.getField('motives'), this.isOverridden('motives'));
-        this.createHeaderEntry(header, 'Tone & Feel', this.adv.tone);
-        this.createHeaderEntry(header, 'Impulses', this.adv.impulses);
-        this.createHeaderEntry(header, 'Potential Adversaries', this.adv.adversaries);
+        await this.createHeaderEntry(header, 'Experience', this.adv.xp);
+        await this.createHeaderEntry(header, 'Motives & Tactics', this.getField('motives'), this.isOverridden('motives'));
+        await this.createHeaderEntry(header, 'Tone & Feel', this.adv.tone);
+        await this.createHeaderEntry(header, 'Impulses', this.adv.impulses);
+        await this.createHeaderEntry(header, 'Potential Adversaries', this.adv.adversaries);
     }
 
     async createFeature(content: HTMLElement, index: number, feature: Feature) {
         const paragraph = content.createEl('p', { cls: 'bv-smaller' })
-        paragraph.createEl('b', { text: feature.name || '' });
+        await this.inline(paragraph.createEl('b'), feature.name || '');
         paragraph.createSpan({ text: feature.type && `${feature.name}` ? ' - ' : '' });
-        paragraph.createSpan({ text: feature.type || '' });
+        await this.inline(paragraph.createSpan(), feature.type || '');
         if (feature.type || feature.name) {
             paragraph.createEl('br');
         }
@@ -522,9 +644,10 @@ export class AdversaryCard extends MarkdownRenderChild {
             this.createStatSlots(paragraph, 'Countdown', feature.countdown || 0, [this.adv.id, 0, 'countdown', index]);
         }
         if (feature.desc) {
+            // Rendered as a block (not via inline()) so descriptions keep their
+            // paragraphs and lists.
             const featureDiv = paragraph.createDiv({ cls: 'bv-feature' });
-            const useDiceRoller = !!getDiceRollerAPI();
-            const placeholderClass = useDiceRoller ? 'bv-dice-placeholder' : 'bv-rollable';
+            const placeholderClass = getDiceRollerAPI() ? 'bv-dice-placeholder' : 'bv-rollable';
             await MarkdownRenderer.render(
                 this.plugin.app,
                 feature
@@ -533,28 +656,10 @@ export class AdversaryCard extends MarkdownRenderChild {
                     .replace(/\b([mM])ark a [sS]tress\b/g, '<b class="bv-mark-stress">$1ark a Stress</b>')
                     .replace(DICE_PATTERN, `<span class="${placeholderClass}" data-dice="$&">$&</span>`),
                 featureDiv,
-                this.filePath,
+                this.renderPath,
                 this
             );
-            if (useDiceRoller) {
-                for (const el of Array.from(featureDiv.querySelectorAll('.bv-dice-placeholder'))) {
-                    const dice = el.getAttribute('data-dice');
-                    if (!dice) continue;
-                    const wrapper = createSpan();
-                    try {
-                        const api = getDiceRollerAPI();
-                        const roller = api?.getRoller(dice, this.filePath);
-                        if (roller) {
-                            appendDiceRoller(wrapper, roller, dice);
-                        } else {
-                            wrapper.createSpan({ text: dice, cls: 'bv-rollable' });
-                        }
-                    } catch {
-                        wrapper.createSpan({ text: dice, cls: 'bv-rollable' });
-                    }
-                    el.replaceWith(wrapper);
-                }
-            }
+            this.swapDicePlaceholders(featureDiv);
         }
         // Summon buttons
         if (feature.summon) {
@@ -570,7 +675,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         }
 
         if (feature.flavor) {
-            paragraph.createDiv().createEl('i', { cls: 'bv-muted', text: feature.flavor });
+            await this.inline(paragraph.createDiv().createEl('i', { cls: 'bv-muted' }), feature.flavor);
         }
     }
 
@@ -610,8 +715,9 @@ export class AdversaryCard extends MarkdownRenderChild {
         let yaml: string;
         if (match.raw) {
             yaml = match.raw;
-            if (copy.name !== match.name) {
-                yaml = yaml.replace(/^(name:\s*).*$/m, `$1${copy.name}`);
+            const renamed = copy.name !== match.name ? nameLine(copy.name ?? '') : null;
+            if (renamed) {
+                yaml = yaml.replace(/^name:\s*.*$/m, renamed);
             }
         } else {
             yaml = stringifyYaml(copy);
@@ -1031,7 +1137,7 @@ export class AdversaryCard extends MarkdownRenderChild {
     async render() {
         this.container.empty();
         const card = this.container.createDiv({ cls: 'callout bv-statblock', attr: { 'data-callout': 'daggerheart-card' } });
-        this.createTitle(card);
+        await this.createTitle(card);
 
         card.addEventListener('click', (event) => {
             const elt = event.target as HTMLElement;

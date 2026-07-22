@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import { builtinModules } from "node:module";
+import { resolveTarget, syncToVault, watchStaticArtifacts } from "./scripts/sync-vault.mjs";
 
 const banner =
 `/*
@@ -11,7 +12,25 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = (process.argv[2] === "production");
 
+// Mirror every successful build into the dev vault (see scripts/sync-vault.mjs).
+// A sync failure must not kill the watcher — a bad path should be fixable
+// without restarting the build.
+const vaultSync = {
+	name: "vault-sync",
+	setup(build) {
+		build.onEnd((result) => {
+			if (result.errors.length > 0) return;
+			try {
+				syncToVault();
+			} catch (error) {
+				console.error(`sync failed: ${error.message}`);
+			}
+		});
+	},
+};
+
 const context = await esbuild.context({
+	plugins: [vaultSync],
 	banner: {
 		js: banner,
 	},
@@ -46,4 +65,12 @@ if (prod) {
 	process.exit(0);
 } else {
 	await context.watch();
+	// esbuild only rebuilds on changes reachable from src/main.ts, so styles.css
+	// and manifest.json need their own watcher to reach the vault.
+	watchStaticArtifacts();
+
+	const target = resolveTarget();
+	console.log(target
+		? `watching — build output syncs to ${target.dir}`
+		: "watching — no dev vault configured (set OBSIDIAN_PLUGIN_DIR or create .dev-vault)");
 }

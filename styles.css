@@ -367,9 +367,41 @@ button.bv-top-corner.bv-corner-edit-active {
     background: var(--background-modifier-hover);
 }
 
-/* Dice-roller plugin integration */
+/* Dice-roller plugin integration.
+ *
+ * The plugin ships `.dice-roller { display: inline-flex; align-items: center;
+ * vertical-align: top }` with an 18px `--icon-size` dice glyph inside. In a
+ * stat block the surrounding text is `font-size: smaller`, so the flex box ends
+ * up taller than the line it sits on: `align-items: center` re-centres the
+ * formula inside that taller box and `vertical-align: top` pins the box to the
+ * top of the line, dropping the formula ~1.5px below its neighbours' baseline.
+ * Flatten the whole thing back to inline text on a shared baseline and scale
+ * the icon to the local font size. */
 .bv-statblock .dice-roller {
     display: inline;
+    vertical-align: baseline;
+    margin: 0;
+}
+
+.bv-statblock .dice-roller > .dice-roller-result,
+.bv-statblock .dice-roller > .dice-roller-formula {
+    display: inline;
+    vertical-align: baseline;
+}
+
+/* `display: inline` on the container drops the plugin's flex `gap`, so the icon
+ * needs its own leading space. */
+.bv-statblock .dice-roller > .dice-roller-button {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: baseline;
+    margin-left: 0.25em;
+}
+
+.bv-statblock .dice-roller > .dice-roller-button .svg-icon {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
 }
 
 .markdown-reading-view .block-language-daggerheart + .edit-block-button,

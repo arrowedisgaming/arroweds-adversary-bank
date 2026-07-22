@@ -1,11 +1,12 @@
 {
 	"name": "arroweds-adversary-bank",
-	"version": "1.8.1",
+	"version": "1.9.0",
 	"packageManager": "pnpm@10.32.1",
 	"description": "Manage and run Daggerheart TTRPG encounters with searchable adversary stat blocks, condition tracking, and instance management.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
+		"sync": "node -e \"import('./scripts/sync-vault.mjs').then(m => m.syncToVault() || console.log('no dev vault configured'))\"",
 		"typecheck": "tsc -noEmit -skipLibCheck",
 		"lint:ts": "eslint \"src/**/*.ts\" --max-warnings=0",
 		"lint:css": "node scripts/check-css.mjs",

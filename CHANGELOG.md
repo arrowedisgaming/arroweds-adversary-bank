@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-07-22
+
+### Added
+
+- Markdown in every text property, not just feature `desc` ([#1](https://github.com/arrowedisgaming/arroweds-adversary-bank/issues/1)). `name`, `desc`, `weapon`, `range`, `damage`, `difficulty`, `xp`, `motives`, `tone`, `impulses`, `adversaries`, and a feature's `name`, `type`, and `flavor` now render through Obsidian's markdown pipeline, so `**bold**`, `*italic*`, `==highlight==`, `` `code` ``, `[[wikilinks]]`, and `#tags` work anywhere on a stat block. Fields with no markdown characters skip the renderer entirely, so cards with plain text render exactly as before. Markdown in `damage` may wrap dice notation (`"*2d6 magic*"`) and still produce a working roller. Inline rename edits the raw YAML value and now quotes it when the name needs quoting, so renaming a card to `**Wolf**` no longer writes invalid YAML.
+
+### Changed
+
+- Builds can now mirror `main.js`, `manifest.json`, and `styles.css` into a local Obsidian vault's plugin folder, so changes are testable in the real app without a manual copy. Point `.dev-vault` (gitignored) or `$OBSIDIAN_PLUGIN_DIR` at the folder; `pnpm dev` additionally watches `styles.css` and `manifest.json`, which esbuild does not rebuild. Syncing is opt-in and validates that the target path ends in `.obsidian/plugins/<plugin id>` before writing, so CI and fresh clones are unaffected.
+
+### Fixed
+
+- Relative links and dice in a stat block now resolve against the note the code block actually lives in, rather than whichever note happens to be active. Cards rendered in an embed, in a canvas, or in the background previously resolved links against the wrong file. Stat block ids are still derived from the active file, so tracked HP, stress, and conditions are unaffected.
+
+- Dice rollers rendered by the dice-roller plugin sat below the baseline of the text around them, most visibly inside feature descriptions. The plugin's `.dice-roller` is an `inline-flex` box that vertically centers its contents around an 18px dice icon and then top-aligns itself in the line; against a stat block's smaller body text that pushed the formula about 1.5px low. Stat block dice are now laid out as plain inline text on the shared baseline, with the icon scaled to the surrounding font size.
+
 ## [1.8.1] - 2026-05-27
 
 ### Changed

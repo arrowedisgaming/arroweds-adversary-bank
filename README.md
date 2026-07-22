@@ -117,7 +117,7 @@ The `daggerheart` code block parses the adversary or environment as [YAML](https
 | --- | --- | --- |
 | `name` | Name of the feature | `Relentless (2)` |
 | `type` | Feature type | `Passive` |
-| `desc` | Feature description; supports markdown | `Make a standard attack. On a success, the target is *Vulnerable* until they next act.` |
+| `desc` | Feature description | `Make a standard attack. On a success, the target is *Vulnerable* until they next act.` |
 | `uses` | Uses per scene | `2` |
 | `countdown` | Size of the countdown | `6` |
 | `flavor` | Hints for GM/PCs | `Have any of the PCs forded rivers like this before?` |
@@ -133,6 +133,20 @@ Instead, additional properties are available:
 | `tone` | Tone and feel of the environment | `Musty and mournful, serene yet slightly wrong` |
 
 All properties are optional and simply won't render if skipped.
+
+Every text property supports markdown — `name`, `desc`, `weapon`, `range`, `damage`,
+`difficulty`, `xp`, `motives`, `tone`, `impulses`, `adversaries`, and a feature's
+`name`, `type`, `desc`, and `flavor`. Use `**bold**`, `*italic*`, `==highlight==`,
+`` `code` ``, `~~strikethrough~~`, `[[wikilinks]]`, `#tags`, and inline HTML. Quote any
+value that starts with a markdown character so YAML doesn't choke on it —
+`name: "**Bear**"`, not `name: **Bear**`. (Renaming a card from the UI quotes the
+value for you.)
+
+Markdown in `damage` may wrap dice notation — `damage: "*2d6 magic*"` renders as one
+emphasised phrase with a working roller inside it.
+
+Bear in mind `name` already renders bold, so `**bold**` there changes nothing
+visible; italic, highlight, and code do show.
 
 > [!IMPORTANT]
 > Do not use `TAB` in stat blocks. The indents for features must be manually indented with spaces.
@@ -161,6 +175,35 @@ gh attestation verify styles.css -R arrowedisgaming/arroweds-adversary-bank
 ```
 </details>
 
+## Local development
+
+```bash
+pnpm install
+pnpm dev     # rebuild on change
+pnpm check   # typecheck, lint, production build
+```
+
+To test against a real vault, point the build at that vault's plugin folder — every
+build then writes `main.js`, `manifest.json`, and `styles.css` straight into it:
+
+```bash
+echo "/path/to/vault/.obsidian/plugins/arroweds-adversary-bank" > .dev-vault
+```
+
+`.dev-vault` is gitignored; `$OBSIDIAN_PLUGIN_DIR` overrides it for a single run.
+`pnpm dev` also watches `styles.css` and `manifest.json`, which esbuild doesn't
+rebuild on its own. `pnpm sync` copies the current build without rebuilding. The
+path must end in `.obsidian/plugins/arroweds-adversary-bank` or the sync refuses to
+run, so a typo can't scatter build output through a vault.
+
+If two folders under `.obsidian/plugins/` declare the same `id` in their
+`manifest.json`, Obsidian loads only one of them — and it may not be the one you're
+syncing to. Check for stale copies of this plugin under an old folder name if edits
+don't seem to take effect.
+
+Obsidian caches plugin code, so reload it to pick up a rebuild (`Ctrl+P` >
+`Reload app without saving`). [Hot Reload](https://github.com/pjeby/hot-reload) does
+this automatically if you add an empty `.hotreload` file to the plugin folder.
 
 ## Attributions
 
