@@ -466,12 +466,7 @@ button.bv-top-corner.bv-corner-edit-active {
 }
 
 /* Settings: selected folder list */
-.bv-selected-folders .setting-item {
-    padding: 4px 0;
-    border: none;
-}
-
-.bv-folder-setting-name {
+.bv-selected-folders .setting-item-name {
     font-family: monospace;
     font-size: 13px;
 }

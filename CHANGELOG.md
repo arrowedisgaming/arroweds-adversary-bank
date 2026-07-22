@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-07-22
+
+### Changed
+
+- Settings are now declared with Obsidian's declarative settings API (`getSettingDefinitions()`), so every setting is findable from Obsidian's settings search. The library folder list moves to the built-in list control, so removing a folder gains a standard delete button and Delete/Backspace keyboard support. **This raises `minAppVersion` to 1.13.0**; the imperative `display()` implementation has been removed.
+- The "Reset all customizations" button uses `setDestructive()` instead of the deprecated `setWarning()`, condition badges use `createSpan()`, and the dice-roll notice builds its fragment with Obsidian's `createFragment()` helper rather than a native `createDocumentFragment()` call.
+
 ## [1.9.0] - 2026-07-22
 
 ### Added

@@ -749,7 +749,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         const addBadge = (condition: string) => {
             const active = current.includes(condition);
             const isCustom = !standardNames.includes(condition);
-            const badge = condBar.createEl('span', {
+            const badge = condBar.createSpan({
                 text: condition,
                 cls: `bv-condition-badge ${active ? 'bv-condition-active' : ''} ${isCustom ? 'bv-condition-custom' : ''}`,
             });
@@ -776,7 +776,7 @@ export class AdversaryCard extends MarkdownRenderChild {
         }
 
         // "+" button for ad-hoc custom conditions
-        const addBtn = condBar.createEl('span', {
+        const addBtn = condBar.createSpan({
             text: '+',
             cls: 'bv-condition-badge bv-condition-add',
         });
@@ -1167,7 +1167,7 @@ export class AdversaryCard extends MarkdownRenderChild {
             const dice = elt.classList.contains('bv-rollable-attack')
                 ? `1d20${this.adv.attack == '0' ? '' : this.adv.attack}`
                 : elt.innerText;
-            const fragment = this.container.doc.createDocumentFragment();
+            const fragment = createFragment();
             fragment.createEl('code', { text: `${dice} = ${roll(dice).result}` });
             new Notice(fragment);
         });
@@ -1343,7 +1343,7 @@ export class AdversaryEditModal extends Modal {
         new Setting(footer)
             .addButton(btn => btn
                 .setButtonText('Reset all customizations')
-                .setWarning()
+                .setDestructive()
                 .onClick(() => {
                     this.card.resetOverrides();
                     this.onChange();
