@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.10.1] - 2026-07-24
+
+### Fixed
+
+- Adversaries inserted from the library no longer lose every feature. A note that describes the same stat block in both YAML frontmatter and a `daggerheart` code block was indexed twice, and the frontmatter copy — which never read features — was the one the duplicate filter kept. Code blocks are now parsed first, and a `daggerheart` block takes precedence over a frontmatter entry with the same name, so inserting reproduces the note's own stat block verbatim, features included. Notes with frontmatter only, blocks naming something other than the frontmatter, and `statblock` blocks read under FSB compatibility are all unaffected.
+- A `features:` (or `conditions:`) list in a note's frontmatter is now read. Previously both keys were silently dropped, so frontmatter-only notes had to spell their features out as `***Name - Type:***` body prose to have them picked up at all.
+- Library scans no longer read every Markdown file in a library folder off disk. Notes with neither frontmatter nor a code block are skipped on metadata alone, and notes that have both are read once rather than twice.
+
 ## [1.10.0] - 2026-07-22
 
 ### Changed

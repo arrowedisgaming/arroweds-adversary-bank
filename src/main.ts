@@ -1,4 +1,4 @@
-import { Editor, Plugin, setTooltip, Menu, Notice, debounce, type Debouncer } from 'obsidian';
+import { Editor, Plugin, setTooltip, Menu, Notice, debounce, type Debouncer, type SectionCache } from 'obsidian';
 import { SettingTab, type PluginSettings, DEFAULT_SETTINGS } from './settings';
 import { ADV_LIBRARY, ENV_LIBRARY, ADV_TEMPLATE, ENV_TEMPLATE, isRecord, toRawAdversary, toRawAdversaries, walkFolder, tryParseYaml } from './utils';
 import { AdversaryCard, AdversaryModal, type RawAdversary } from './ui';
@@ -110,8 +110,15 @@ function buildFrontmatterEntry(frontmatter: unknown): RawAdversary | null {
         tone: frontmatter.tone,
         impulses: frontmatter.impulses,
         adversaries: frontmatter.adversaries ?? frontmatter.potential_adversaries,
+        features: frontmatter.features,
+        conditions: frontmatter.conditions,
         source: frontmatter.source,
     });
+}
+
+/** Environments are the stat blocks with no HP and no Stress. */
+function isEnvironment(adv: RawAdversary): boolean {
+    return !adv.hp && !adv.stress;
 }
 
 function buildDaggerheartEntry(raw: string): RawAdversary | null {
@@ -230,14 +237,37 @@ export default class BeastVault extends Plugin {
                 content = toRawAdversaries(tryParseYaml(await this.app.vault.read(file)));
             } else if (file.extension == 'md') {
                 const metadata = this.app.metadataCache.getFileCache(file)
+                const codeblocks = metadata?.sections?.filter(sec => sec.type == 'code') ?? [];
+                // A note with neither can't hold a stat block; don't read it off disk.
+                if (!metadata?.frontmatter && codeblocks.length === 0) return;
+                const bodyText = await this.app.vault.read(file);
+
+                // Parse code blocks before frontmatter, so a `daggerheart` block describing
+                // the same stat block can take precedence over the frontmatter below.
+                const daggerheartBlocks: RawAdversary[] = [];
+                const fsbBlocks: RawAdversary[] = [];
+                if (codeblocks.length > 0) {
+                    const lines = bodyText.split('\n');
+                    const blockBody = (sec: SectionCache) =>
+                        lines.slice(sec.position.start.line + 1, sec.position.end.line).join("\n");
+                    for (const sec of codeblocks) {
+                        const fence = lines[sec.position.start.line].trim();
+                        if (fence === '```daggerheart') {
+                            const entry = buildDaggerheartEntry(blockBody(sec));
+                            if (entry) daggerheartBlocks.push(entry);
+                        // Also scan FSB-compatible statblocks
+                        } else if (fence === '```statblock' && this.state.settings.compatibleWithFSB) {
+                            const entry = buildFsbEntry(blockBody(sec));
+                            if (entry) fsbBlocks.push(entry);
+                        }
+                    }
+                }
 
                 // Check frontmatter for adversary data
                 const entry = buildFrontmatterEntry(metadata?.frontmatter);
                 if (entry) {
 
                     // Enrich from markdown body if fields are missing
-                    const bodyText = await this.app.vault.read(file);
-
                     if (!entry.desc) {
                         const descMatch = bodyText.match(/^\*([^*].+?)\*\s*$/m);
                         if (descMatch) entry.desc = descMatch[1];
@@ -264,33 +294,18 @@ export default class BeastVault extends Plugin {
                         if (features.length > 0) entry.features = features;
                     }
 
-                    content.push(entry);
+                    // A note that describes one stat block in both frontmatter and a
+                    // `daggerheart` block would otherwise be indexed twice, and the
+                    // frontmatter copy — which carries no `raw` for lossless inserts —
+                    // would win the duplicate filter below. Drop it in favour of the
+                    // block. Names are compared exactly, as the duplicate filter does,
+                    // and an environment never stands in for an adversary or vice versa.
+                    const shadowed = daggerheartBlocks.some(block =>
+                        block.name === entry.name && isEnvironment(block) === isEnvironment(entry));
+                    if (!shadowed) content.push(entry);
                 }
 
-                // Also check for daggerheart code blocks
-                const codeblocks = metadata?.sections?.filter(sec => sec.type == 'code') ?? [];
-                if (codeblocks.length > 0) {
-                const lines = (await this.app.vault.read(file)).split('\n');
-                const daggerheartBlocks = codeblocks
-                    .filter(sec => lines[sec.position.start.line].trim() === '```daggerheart')
-                    .map(sec => {
-                        const targetLines = lines.slice(sec.position.start.line + 1, sec.position.end.line).join("\n");
-                        return buildDaggerheartEntry(targetLines);
-                    })
-                    .filter((entry): entry is RawAdversary => entry !== null);
-                content = content.concat(daggerheartBlocks);
-                // Also scan FSB-compatible statblocks
-                if (this.state.settings.compatibleWithFSB) {
-                    const fsb = codeblocks
-                        .filter(sec => lines[sec.position.start.line].trim() === '```statblock')
-                        .map(sec => {
-                            const targetLines = lines.slice(sec.position.start.line + 1, sec.position.end.line).join("\n");
-                            return buildFsbEntry(targetLines);
-                        })
-                        .filter((entry): entry is RawAdversary => entry !== null);
-                    content = content.concat(fsb);
-                }
-                }
+                content = content.concat(daggerheartBlocks, fsbBlocks);
             } else {
                 return;
             }
