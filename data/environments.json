@@ -285,7 +285,7 @@
       {
         "name": "Blasphemous Might",
         "type": "Action",
-        "desc": "A portion of the ritual's power is diverted into a cult member to fight off interlopers. Choose one adversary to become Imbued with terrible magic until the scene ends or they're defeated. An Imbued adversary immediately takes the spotlight and gains one of the following benefits, or all three if you spend a Fear:\n- They gain advantage on all attacks.\n- They deal an extra 1d10 damage on a successful attack.\n- They gain the following feature:\n**Relentless (2)** \n- Passive: This adversary can be spotlighted multiple times per GM turn. Spend Fear as usual to spotlight them.",
+        "desc": "A portion of the ritual's power is diverted into a cult member to fight off interlopers. Choose one adversary to become Imbued with terrible magic until the scene ends or they're defeated. An Imbued adversary immediately takes the spotlight and gains one of the following benefits, or all three if you spend a Fear:\n- They gain advantage on all attacks.\n- They deal an extra 1d10 damage on a successful attack.\n- They gain the following feature:\n**Relentless (2)** - Passive: This adversary can be spotlighted multiple times per GM turn. Spend Fear as usual to spotlight them.",
         "flavor": "How does the enemy change in appearance? What fears do their blows bring to the surface?"
       },
       {
@@ -1508,7 +1508,7 @@
       {
         "name": "Air Pockets",
         "type": "Passive",
-        "desc": "A PC can reset their their Air Supply Countdown to its starting value by locating a pocket of air with a successful Knowledge or Instinct Roll.",
+        "desc": "A PC can reset their Air Supply Countdown to its starting value by locating a pocket of air with a successful Knowledge or Instinct Roll.",
         "flavor": "What signs or structures do you look for? What does it feel like to know this might be the last breath you take?"
       },
       {
@@ -1658,7 +1658,7 @@
       {
         "name": "Silent Ruins",
         "type": "Passive",
-        "desc": "The towering silver and blue architecture of the capital is undamaged but overgrown with bioluminescent flora that pulses in time with the lunar tides. A PC who succceeds on a Finesse Roll can harvest a moon plant without killing it. A PC who eats one or more living moon plants gains a +1 bonus to Spellcast Rolls until their next long rest.",
+        "desc": "The towering silver and blue architecture of the capital is undamaged but overgrown with bioluminescent flora that pulses in time with the lunar tides. A PC who succeeds on a Finesse Roll can harvest a moon plant without killing it. A PC who eats one or more living moon plants gains a +1 bonus to Spellcast Rolls until their next long rest.",
         "flavor": "What earth flora do these moon plants look like? What do they taste like, and how do they affect the eater physically?"
       },
       {

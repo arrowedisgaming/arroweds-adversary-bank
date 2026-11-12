@@ -92,7 +92,7 @@
       {
         "name": "Ramp Up",
         "type": "Passive",
-        "desc": "You must Spend a Fear to spotlight the Ogre. While spotlighted, they can make their standard attack against all targets within range."
+        "desc": "You must spend a Fear to spotlight the Ogre. While spotlighted, they can make their standard attack against all targets within range."
       },
       {
         "name": "Bone Breaker",
@@ -209,7 +209,7 @@
       {
         "name": "Grab and Drag",
         "type": "Action",
-        "desc": "Make an attack against a target within Close range. On a success, Spend a Fear to pull them into Melee range, deal 1d6+2 physical damage, and Restrain them until the Defender takes Severe damage."
+        "desc": "Make an attack against a target within Close range. On a success, spend a Fear to pull them into Melee range, deal 1d6+2 physical damage, and Restrain them until the Defender takes Severe damage."
       }
     ]
   },
@@ -329,7 +329,7 @@
       {
         "name": "Venomous Stinger",
         "type": "Action",
-        "desc": "Make an attack against a target within Very Close range. On a success, Spend a Fear to deal 1d4+4 physical damage and Poison them until their next rest or they succeed on a Knowledge Roll (16). While Poisoned, the target must roll a d6 before they make an action roll. On a result of 4 or lower, they must mark a Stress."
+        "desc": "Make an attack against a target within Very Close range. On a success, spend a Fear to deal 1d4+4 physical damage and Poison them until their next rest or they succeed on a Knowledge Roll (16). While Poisoned, the target must roll a d6 before they make an action roll. On a result of 4 or lower, they must mark a Stress."
       },
       {
         "name": "Momentum",
@@ -369,6 +369,35 @@
         "name": "Spitter",
         "type": "Action",
         "desc": "Spend a Fear to introduce a d6 Spitter Die. When the Snake is in the spotlight, roll this die. On a result of 5 or higher, all targets in front of the Snake within Far range must succeed on an Agility Reaction Roll or take 1d4 physical damage. The Snake can take the spotlight a second time this GM turn."
+      }
+    ]
+  },
+  {
+    "name": "HARRIER",
+    "tier": 1,
+    "type": "Standard",
+    "desc": "A nimble fighter armed with javelins.",
+    "difficulty": 12,
+    "motives": "Flank, harry, kite, profit",
+    "hp": 3,
+    "stress": 3,
+    "attack": 1,
+    "weapon": "Javelin",
+    "range": "Close",
+    "damage": "1d6+2 phy",
+    "thresholds": "5/9",
+    "xp": "Camouflage +2",
+    "source": "corebook",
+    "features": [
+      {
+        "name": "Maintain Distance",
+        "type": "Passive",
+        "desc": "After making a standard attack, the Harrier can move anywhere within Far range."
+      },
+      {
+        "name": "Fall Back",
+        "type": "Reaction",
+        "desc": "When a creature moves into Melee range to make an attack, you can mark a Stress before the attack roll to move anywhere within Close range and make an attack against that creature. On a success, deal 1d10+2 physical damage."
       }
     ]
   },
@@ -456,35 +485,6 @@
         "name": "Momentum",
         "type": "Reaction",
         "desc": "When the Head Guard makes a successful attack against a PC, you gain a Fear."
-      }
-    ]
-  },
-  {
-    "name": "HARRIER",
-    "tier": 1,
-    "type": "Standard",
-    "desc": "A nimble fighter armed with javelins.",
-    "difficulty": 12,
-    "motives": "Flank, harry, kite, profit",
-    "hp": 3,
-    "stress": 3,
-    "attack": 1,
-    "weapon": "Javelin",
-    "range": "Close",
-    "damage": "1d6+2 phy",
-    "thresholds": "5/9",
-    "xp": "Camouflage +2",
-    "source": "corebook",
-    "features": [
-      {
-        "name": "Maintain Distance",
-        "type": "Passive",
-        "desc": "After making a standard attack, the Harrier can move anywhere within Far range."
-      },
-      {
-        "name": "Fall Back",
-        "type": "Reaction",
-        "desc": "When a creature moves into Melee range to make an attack, you can mark a Stress before the attack roll to move anywhere within Close range and make an attack against that creature. On a success, deal 1d10+2 physical damage."
       }
     ]
   },
@@ -921,7 +921,7 @@
       {
         "name": "Split",
         "type": "Reaction",
-        "desc": "When the Ooze has 3 or more HP marked, you can Spend a Fear to split them into two Tiny Green Oozes (with no marked HP or Stress). Immediately spotlight both of them."
+        "desc": "When the Ooze has 3 or more HP marked, you can spend a Fear to split them into two Tiny Green Oozes (with no marked HP or Stress). Immediately spotlight both of them."
       }
     ]
   },
@@ -979,7 +979,7 @@
       {
         "name": "Split",
         "type": "Reaction",
-        "desc": "When the Ooze has 3 or more HP marked, you can Spend a Fear to split them into two Tiny Red Oozes (with no marked HP or Stress). Immediately spotlight both of them."
+        "desc": "When the Ooze has 3 or more HP marked, you can spend a Fear to split them into two Tiny Red Oozes (with no marked HP or Stress). Immediately spotlight both of them."
       }
     ]
   },
@@ -1483,7 +1483,7 @@
         "name": "Adrenaline Burst",
         "type": "Action",
         "uses": 1,
-        "desc": "Once per scene, Spend a Fear to clear 2 HP and 2 Stress."
+        "desc": "Once per scene, spend a Fear to clear 2 HP and 2 Stress."
       },
       {
         "name": "Momentum",
@@ -1811,7 +1811,7 @@
       {
         "name": "The Subtle Blade",
         "type": "Reaction",
-        "desc": "When the Assassin successfully makes a standard attack against a Vulnerable target, you can Spend a Fear to deal Severe damage instead of their standard damage."
+        "desc": "When the Assassin successfully makes a standard attack against a Vulnerable target, you can spend a Fear to deal Severe damage instead of their standard damage."
       },
       {
         "name": "Momentum",
@@ -1980,7 +1980,7 @@
       {
         "name": "Shadow Shackles",
         "type": "Action",
-        "desc": "Spend a Fear and choose a point within Far range. All targets within Close range of that point are Restrained in smoky chains until they break free with a successful Strength or Instinct Roll. A target Restrained by this feature must Spend a Hope to make an action roll."
+        "desc": "Spend a Fear and choose a point within Far range. All targets within Close range of that point are Restrained in smoky chains until they break free with a successful Strength or Instinct Roll. A target Restrained by this feature must spend a Hope to make an action roll."
       },
       {
         "name": "Fear Is Fuel",
@@ -2243,6 +2243,34 @@
     ]
   },
   {
+    "name": "GIANT RECRUIT",
+    "tier": 2,
+    "type": "Minion",
+    "desc": "A giant fighter wearing borrowed armor.",
+    "difficulty": 13,
+    "motives": "Batter, make a living, overwhelm, terrify",
+    "hp": 1,
+    "stress": 2,
+    "attack": 1,
+    "weapon": "Warhammer",
+    "range": "Very Close",
+    "damage": "5 phy",
+    "xp": "",
+    "source": "corebook",
+    "features": [
+      {
+        "name": "Minion (7)",
+        "type": "Passive",
+        "desc": "The Recruit is defeated when they take any damage. For every 7 damage a PC deals to the Recruit, defeat an additional Minion within range the attack would succeed against."
+      },
+      {
+        "name": "Group Attack",
+        "type": "Action",
+        "desc": "Spend a Fear to choose a target and spotlight all Giant Recruits within Close range of them. Those Minions move into Melee range of the target and make one shared attack roll. On a success, they deal 5 physical damage each. Combine this damage."
+      }
+    ]
+  },
+  {
     "name": "GIANT EAGLE",
     "tier": 2,
     "type": "Skulk",
@@ -2282,34 +2310,6 @@
     ]
   },
   {
-    "name": "GIANT RECRUIT",
-    "tier": 2,
-    "type": "Minion",
-    "desc": "A giant fighter wearing borrowed armor.",
-    "difficulty": 13,
-    "motives": "Batter, make a living, overwhelm, terrify",
-    "hp": 1,
-    "stress": 2,
-    "attack": 1,
-    "weapon": "Warhammer",
-    "range": "Very Close",
-    "damage": "5 phy",
-    "xp": "",
-    "source": "corebook",
-    "features": [
-      {
-        "name": "Minion (7)",
-        "type": "Passive",
-        "desc": "The Recruit is defeated when they take any damage. For every 7 damage a PC deals to the Recruit, defeat an additional Minion within range the attack would succeed against."
-      },
-      {
-        "name": "Group Attack",
-        "type": "Action",
-        "desc": "Spend a Fear to choose a target and spotlight all Giant Recruits within Close range of them. Those Minions move into Melee range of the target and make one shared attack roll. On a success, they deal 5 physical damage each. Combine this damage."
-      }
-    ]
-  },
-  {
     "name": "GORGON",
     "tier": 2,
     "type": "Solo",
@@ -2344,7 +2344,7 @@
       {
         "name": "Petrifying Gaze",
         "type": "Reaction",
-        "desc": "When the Gorgon takes damage from an attack within Close range, you can Spend a Fear to force the attacker to make an Instinct Reaction Roll. On a failure, they begin to turn to stone, marking a HP and starting a Petrification Countdown (4). This countdown ticks down when the Gorgon is attacked. When it triggers, the target must make a death move. If the Gorgon is defeated, all petrification countdowns end."
+        "desc": "When the Gorgon takes damage from an attack within Close range, you can spend a Fear to force the attacker to make an Instinct Reaction Roll. On a failure, they begin to turn to stone, marking a HP and starting a Petrification Countdown (4). This countdown ticks down when the Gorgon is attacked. When it triggers, the target must make a death move. If the Gorgon is defeated, all petrification countdowns end."
       },
       {
         "name": "Momentum",
@@ -2510,7 +2510,7 @@
       {
         "name": "Ramp Up",
         "type": "Passive",
-        "desc": "You must Spend a Fear to spotlight the Minotaur. While spotlighted, they can make their standard attack against all targets within range."
+        "desc": "You must spend a Fear to spotlight the Minotaur. While spotlighted, they can make their standard attack against all targets within range."
       },
       {
         "name": "Charging Bull",
@@ -3105,7 +3105,7 @@
       {
         "name": "My Turn",
         "type": "Reaction",
-        "desc": "When the Demon marks HP from an attack, Spend a number of Fear equal to the HP marked by the Demon to cause the attacker to mark the same number of HP."
+        "desc": "When the Demon marks HP from an attack, spend a number of Fear equal to the HP marked by the Demon to cause the attacker to mark the same number of HP."
       },
       {
         "name": "Rivalry",
@@ -3115,7 +3115,7 @@
       {
         "name": "What's Yours Is Mine",
         "type": "Reaction",
-        "desc": "When a PC takes Severe damage within Very Close range of the Demon, you can Spend a Fear to cause the target to make a Finesse Reaction Roll. On a failure, the Demon seizes one item or consumable of their choice from the target's inventory."
+        "desc": "When a PC takes Severe damage within Very Close range of the Demon, you can spend a Fear to cause the target to make a Finesse Reaction Roll. On a failure, the Demon seizes one item or consumable of their choice from the target's inventory."
       }
     ]
   },
@@ -3222,7 +3222,7 @@
       {
         "name": "We Are All One",
         "type": "Reaction",
-        "desc": "When an ally dies within Close range, you can Spend a Fear to clear 2 HP and 2 Stress as the fallen ally's life force is returned to the forest."
+        "desc": "When an ally dies within Close range, you can spend a Fear to clear 2 HP and 2 Stress as the fallen ally's life force is returned to the forest."
       }
     ]
   },
@@ -3367,7 +3367,7 @@
       {
         "name": "Split",
         "type": "Reaction",
-        "desc": "When the Ooze has 4 or more HP marked, you can Spend a Fear to split them into two Green Oozes (with no marked HP or Stress). Immediately spotlight both of them."
+        "desc": "When the Ooze has 4 or more HP marked, you can spend a Fear to split them into two Green Oozes (with no marked HP or Stress). Immediately spotlight both of them."
       }
     ]
   },
@@ -3401,7 +3401,7 @@
       {
         "name": "Regeneration",
         "type": "Action",
-        "desc": "If the Hydra has any marked HP, Spend a Fear to clear a HP and grow two heads."
+        "desc": "If the Hydra has any marked HP, spend a Fear to clear a HP and grow two heads."
       },
       {
         "name": "Terrifying Chorus",
@@ -3615,7 +3615,7 @@
       {
         "name": "Mistform",
         "type": "Reaction",
-        "desc": "When the Vampire takes physical damage, you can Spend a Fear to take half damage."
+        "desc": "When the Vampire takes physical damage, you can spend a Fear to take half damage."
       }
     ]
   },
@@ -3800,7 +3800,7 @@
       {
         "name": "Dance of Death",
         "type": "Action",
-        "desc": "Mark a Stress to spotlight 1d4 allies. Attacks they make while spotlighted in this way deal half damage, or full damage if you Spend a Fear."
+        "desc": "Mark a Stress to spotlight 1d4 allies. Attacks they make while spotlighted in this way deal half damage, or full damage if you spend a Fear."
       },
       {
         "name": "Beam of Decay",
@@ -3815,7 +3815,7 @@
       {
         "name": "Not Today, My Dears",
         "type": "Reaction",
-        "desc": "When the Necromancer has marked 7 or more of their HP, you can Spend a Fear to have them teleport away to a safe location to recover. A PC who succeeds on an Instinct Roll can trace the teleportation magic to their destination."
+        "desc": "When the Necromancer has marked 7 or more of their HP, you can spend a Fear to have them teleport away to a safe location to recover. A PC who succeeds on an Instinct Roll can trace the teleportation magic to their destination."
       },
       {
         "name": "Your Life Is Mine",
@@ -4052,7 +4052,7 @@
       {
         "name": "Divine Flight",
         "type": "Passive",
-        "desc": "While the Soldier is flying, Spend a Fear to move up to Far range instead of Close range before taking an action."
+        "desc": "While the Soldier is flying, spend a Fear to move up to Far range instead of Close range before taking an action."
       },
       {
         "name": "Group Attack",
@@ -4086,7 +4086,7 @@
       {
         "name": "Divine Flight",
         "type": "Passive",
-        "desc": "While the Seraph is flying, Spend a Fear to move up to Far range instead of Close range before taking an action."
+        "desc": "While the Seraph is flying, spend a Fear to move up to Far range instead of Close range before taking an action."
       },
       {
         "name": "Judgment",
@@ -4102,7 +4102,7 @@
         "name": "We Are One",
         "type": "Action",
         "uses": 1,
-        "desc": "Once per scene, Spend a Fear to spotlight all other adversaries within Far range. Attacks they make while spotlighted in this way deal half damage."
+        "desc": "Once per scene, spend a Fear to spotlight all other adversaries within Far range. Attacks they make while spotlighted in this way deal half damage."
       }
     ]
   },
@@ -4186,7 +4186,7 @@
         "name": "Summon Tormentors",
         "type": "Action",
         "uses": 1,
-        "desc": "Once per day, Spend 2 Fear to summon 2d4 Tier 2 or below Minions relevant to one of the PC's personal nightmares. They appear at Close range relative to that PC."
+        "desc": "Once per day, spend 2 Fear to summon 2d4 Tier 2 or below Minions relevant to one of the PC's personal nightmares. They appear at Close range relative to that PC."
       },
       {
         "name": "Ominous Knowledge",
@@ -4424,7 +4424,7 @@
       {
         "name": "Cornered",
         "type": "Passive",
-        "desc": "Mark a Stress instead of Spending a Fear to spotlight the Ashen Tyrant."
+        "desc": "Mark a Stress instead of spending a Fear to spotlight the Ashen Tyrant."
       },
       {
         "name": "Injured Wings",
@@ -4478,7 +4478,7 @@
       {
         "name": "Fearsome Presence",
         "type": "Passive",
-        "desc": "PCs can't Spend Hope to use features against the Zombie."
+        "desc": "PCs can't spend Hope to use features against the Zombie."
       },
       {
         "name": "Perfect Strike",
@@ -4488,7 +4488,7 @@
       {
         "name": "Skilled Opportunist",
         "type": "Reaction",
-        "desc": "When another adversary deals damage to a target within Very Close range of the Zombie, you can Spend a Fear to add the Zombie's standard attack damage to the damage roll."
+        "desc": "When another adversary deals damage to a target within Very Close range of the Zombie, you can spend a Fear to add the Zombie's standard attack damage to the damage roll."
       }
     ]
   },
@@ -4730,6 +4730,7 @@
       {
         "name": "Den Mother",
         "type": "Action",
+        "uses": 1,
         "desc": "Once per scene, spend 2 Fear to summon up to two Darkweave adversaries (other than Darkweave Queens), who appear within Close range and immediately take the spotlight."
       },
       {
@@ -5520,6 +5521,7 @@
       {
         "name": "Clatter & Recombobulate",
         "type": "Reaction",
+        "uses": 1,
         "desc": "Once per scene when the Armor is defeated, you can spend a Fear to reactivate it. Clear 2 HP and immediately spotlight it."
       }
     ]
@@ -5704,6 +5706,7 @@
       {
         "name": "Scare Tactic",
         "type": "Action",
+        "uses": 3,
         "desc": "Up to three times per scene, spend a Fear to have the Banshee teleport up to Very Far range and scare a PC within Melee range. The PC marks 1d4 Stress. If this causes them to mark HP, they also lose a Hope."
       },
       {
@@ -5767,6 +5770,7 @@
       {
         "name": "Bark at the Moon",
         "type": "Action",
+        "uses": 1,
         "desc": "Once per scene, spend a Fear to have each ally within Close range of the Alpha clear a HP and a Stress."
       },
       {
@@ -6117,6 +6121,7 @@
       {
         "name": "Deathless Obedience",
         "type": "Action",
+        "uses": 3,
         "desc": "Up to three times per scene, you can spend a Fear to spotlight any number of allies within Close range. If any attacks succeed against the same target, combine the damage."
       },
       {
@@ -7138,6 +7143,7 @@
       {
         "name": "To Me, My Pretties",
         "type": "Action",
+        "uses": 1,
         "desc": "Once per scene, summon 2d4 Tier 2 Hordes, which appear at Far range. You gain a Fear for each Horde summoned in this way."
       },
       {
@@ -7543,6 +7549,7 @@
       {
         "name": "Air Support",
         "type": "Reaction",
+        "uses": 3,
         "desc": "Three times per scene, you can spend a Fear to have an ally within Far range reroll a failed attack with advantage."
       }
     ]
@@ -7826,6 +7833,7 @@
       {
         "name": "Swell Ranks",
         "type": "Action",
+        "uses": 1,
         "desc": "Once per scene, mark any number of Stress to have the Night Children open a portal that spews forth reinforcements, refilling the Horde's ranks. Clear a number of HP equal to the number of Stress marked."
       },
       {
@@ -8717,6 +8725,7 @@
       {
         "name": "Unleash the Menagerie",
         "type": "Action",
+        "uses": 1,
         "desc": "Once per scene, mark any number of Stress to summon an equal number of Griffins, which appear at Close range."
       },
       {
@@ -9186,6 +9195,7 @@
       {
         "name": "Supreme Commander",
         "type": "Action",
+        "uses": 1,
         "desc": "Once per scene, spend a Fear to summon 1d6 Hallowed Soldiers within Close range and immediately spotlight one of them."
       },
       {
@@ -9400,6 +9410,7 @@
       {
         "name": "Invert Polarity",
         "type": "Reaction",
+        "uses": 3,
         "desc": "Up to three times per scene, you can spend a Fear to flip any die rolled onto its obverse result. This effect can't be used to alter a critical success."
       }
     ]
@@ -9555,6 +9566,7 @@
       {
         "name": "Regeneration",
         "type": "Action",
+        "uses": 3,
         "desc": "Up to three times per scene, spend any number of Fear to clear an equal number of HP."
       }
     ]

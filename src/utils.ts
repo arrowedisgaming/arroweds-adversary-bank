@@ -144,7 +144,7 @@ features:
 \`\`\`
 `
 
-export const DICE_PATTERN = /(\b\d+d\d+(?:\+\d+d\d+)*(?:\+\d+)?\b)/g;
+export const DICE_PATTERN = /(\b\d+d\d+(?:[+-]\d+d\d+)*(?:[+-]\d+)?\b)/g;
 
 export const DH_CONDITIONS = [
     'Vulnerable',
