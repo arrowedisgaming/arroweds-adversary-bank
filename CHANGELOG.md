@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Hope & Fear adversaries and environments from Daggerheart SRD 2.0 ([#2](https://github.com/arrowedisgaming/arroweds-adversary-bank/issues/2)): 135 adversaries across tiers 1–4 and 28 environments, bringing the built-in library to 264 adversaries and 47 environments. New entries are tagged `source: hopeandfear`. Thanks to [Garonenur](https://github.com/Garonenur) for the original contribution ([#3](https://github.com/arrowedisgaming/arroweds-adversary-bank/pull/3)); the shipped entries were regenerated from the SRD 2.0 PDF and checked against the SRD's adversary index. Features of type `Evolution` are listed as ordinary features for now.
+
+### Changed
+
+- The copyright notice in `README.md` now cites Daggerheart SRD 2.0.
+
 ## [1.11.0] - 2026-11-12
 
 ### Added

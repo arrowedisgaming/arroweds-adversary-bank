@@ -211,7 +211,7 @@ Arroweds Adversary Bank began as a fork of [BeastVault](https://github.com/ly0va
 
 ### Copyright Notice
 
-This plugin includes materials from the Daggerheart System Reference Document 1.0, (c) Critical Role, LLC. All rights reserved.
+This plugin includes materials from the Daggerheart System Reference Document 2.0, (c) Critical Role, LLC. All rights reserved.
 
 Public Game Content created and owned by Darrington Press, LLC. Available at https://www.daggerheart.com.
 
