@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `CONTRIBUTING.md` covering bug reports, development setup, pull request expectations, code guidelines, and how to add adversary and environment data.
+
+### Changed
+
+- Updated development dependencies: `esbuild` 0.17.3 → 0.28.2, `eslint-plugin-obsidianmd` 0.4.1 → 0.5.1, and in-range updates to `eslint`, `typescript-eslint`, `typescript`, `globals`, `tslib`, and `@types/node`. This clears 35 of 38 `pnpm audit` advisories; the remaining three are moderate and sit in upstream packages (`moment` via `obsidian`, `minimatch` via the lint plugin). None of these packages ship in the plugin bundle.
+- Filled in `author` and `keywords` in `package.json`.
+
 ## [1.10.1] - 2026-07-24
 
 ### Fixed
