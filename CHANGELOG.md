@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-11-12
+
 ### Added
 
 - `CONTRIBUTING.md` covering bug reports, development setup, pull request expectations, code guidelines, and how to add adversary and environment data.

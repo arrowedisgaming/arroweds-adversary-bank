@@ -12,7 +12,7 @@ Open an [issue](https://github.com/arrowedisgaming/arroweds-adversary-bank/issue
 
 ## Development setup
 
-You need Node 22 or newer and [pnpm](https://pnpm.io) (`corepack enable` will pick up the pinned version).
+You need Node 22.13 or newer (CI uses Node 22) and [pnpm](https://pnpm.io). `corepack enable` picks up the pinned pnpm version on Node versions that bundle Corepack; otherwise install pnpm directly.
 
 ```bash
 pnpm install
@@ -48,4 +48,6 @@ The built-in library lives in `data/adversaries.json` and `data/environments.jso
 
 ## License
 
-By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).
+By contributing code or documentation, you agree that your contributions are licensed under the [MIT License](LICENSE).
+
+Daggerheart SRD content in `data/` is not MIT-licensed. It remains Public Game Content owned by Darrington Press, LLC, used under the [Darrington Press Community Gaming License](https://darringtonpress.com/license/); see the [Copyright Notice](README.md#copyright-notice) in the README.
