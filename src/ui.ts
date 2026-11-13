@@ -225,8 +225,18 @@ export class AdversaryModal extends SuggestModal<RawAdversary> {
         } else {
             inserted = stringifyYaml(copy);
         }
-        this.editor.replaceSelection(`\`\`\`daggerheart\n${inserted.trim()}\n\`\`\`\n`);
+        insertStatBlock(this.editor, inserted);
     }
+}
+
+/**
+ * Insert a `daggerheart` code block at the cursor. A fence only opens at the
+ * start of a line, so when the cursor is not at the start of a line the block
+ * starts on a new line.
+ */
+function insertStatBlock(editor: Editor, yaml: string) {
+    const midLine = editor.getCursor('from').ch > 0;
+    editor.replaceSelection(`${midLine ? '\n' : ''}\`\`\`daggerheart\n${yaml.trim()}\n\`\`\`\n`);
 }
 
 /** Step 1 of the improvised adversary wizard: pick a tier. */
@@ -275,7 +285,7 @@ export class ImprovisedRoleModal extends SuggestModal<ImprovisedRole> {
         const adversary = buildImprovisedAdversary(this.tier, role);
         adversary.name = autoSuffixName(adversary.name ?? '', this.editor.getValue());
         adversary.id = Math.random().toString(36).slice(2);
-        this.editor.replaceSelection(`\`\`\`daggerheart\n${stringifyYaml(adversary).trim()}\n\`\`\`\n`);
+        insertStatBlock(this.editor, stringifyYaml(adversary));
     }
 }
 
