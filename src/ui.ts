@@ -2,6 +2,11 @@ import { App, Editor, SuggestModal, Modal, Setting, Notice, MarkdownRenderChild,
 import { roll } from '@airjp73/dice-notation';
 import BeastVault, { type InstanceOverrides, type PluginState } from './main';
 import { hexToRgb, DICE_PATTERN, processAdversary, DH_CONDITIONS, autoSuffixName } from './utils';
+import {
+    IMPROVISED_TIERS, IMPROVISED_ROLES, TIER_LEVELS, ROLE_SUMMARY,
+    buildImprovisedAdversary, improvisedSummary,
+    type ImprovisedTier, type ImprovisedRole,
+} from './improvised';
 
 interface DiceRollerElement {
     resultEl?: HTMLElement;
@@ -221,6 +226,56 @@ export class AdversaryModal extends SuggestModal<RawAdversary> {
             inserted = stringifyYaml(copy);
         }
         this.editor.replaceSelection(`\`\`\`daggerheart\n${inserted.trim()}\n\`\`\`\n`);
+    }
+}
+
+/** Step 1 of the improvised adversary wizard: pick a tier. */
+export class ImprovisedTierModal extends SuggestModal<ImprovisedTier> {
+    constructor(app: App, private editor: Editor) {
+        super(app);
+        this.setPlaceholder('Improvised adversary: choose a tier');
+    }
+
+    getSuggestions(query: string): ImprovisedTier[] {
+        const q = query.trim().toLowerCase();
+        return IMPROVISED_TIERS.filter(tier => `tier ${tier}`.includes(q));
+    }
+
+    renderSuggestion(tier: ImprovisedTier, el: HTMLElement) {
+        const heading = el.createDiv({ cls: 'bv-spreadout' });
+        heading.createEl('b', { text: `Tier ${tier}` });
+        heading.createSpan({ text: TIER_LEVELS[tier], cls: 'bv-smaller' });
+    }
+
+    onChooseSuggestion(tier: ImprovisedTier) {
+        new ImprovisedRoleModal(this.app, this.editor, tier).open();
+    }
+}
+
+/** Step 2 of the improvised adversary wizard: pick a role, then insert. */
+export class ImprovisedRoleModal extends SuggestModal<ImprovisedRole> {
+    constructor(app: App, private editor: Editor, private tier: ImprovisedTier) {
+        super(app);
+        this.setPlaceholder(`Tier ${tier} improvised adversary: choose a role`);
+    }
+
+    getSuggestions(query: string): ImprovisedRole[] {
+        const q = query.trim().toLowerCase();
+        return IMPROVISED_ROLES.filter(role => role.toLowerCase().includes(q));
+    }
+
+    renderSuggestion(role: ImprovisedRole, el: HTMLElement) {
+        const heading = el.createDiv({ cls: 'bv-spreadout' });
+        heading.createEl('b', { text: role });
+        heading.createSpan({ text: ROLE_SUMMARY[role], cls: 'bv-smaller' });
+        el.createSpan({ text: improvisedSummary(this.tier, role), cls: 'bv-smaller bv-muted' });
+    }
+
+    onChooseSuggestion(role: ImprovisedRole) {
+        const adversary = buildImprovisedAdversary(this.tier, role);
+        adversary.name = autoSuffixName(adversary.name ?? '', this.editor.getValue());
+        adversary.id = Math.random().toString(36).slice(2);
+        this.editor.replaceSelection(`\`\`\`daggerheart\n${stringifyYaml(adversary).trim()}\n\`\`\`\n`);
     }
 }
 

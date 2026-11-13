@@ -43,6 +43,12 @@ Insert an adversary via a command: `Ctrl+P` > `Insert adversary from library`, o
 > [!TIP]
 > `Click` threshold buttons to mark the corresponding amount of HP. Use `Alt+Click` to clear it instead.
 
+### Improvise an adversary
+
+Need a stat block the library doesn't have? `Ctrl+P` > `Insert improvised adversary` (also in the ribbon menu) asks for a tier and a role, then inserts a ready-to-run block with Difficulty, thresholds, HP, Stress, attack and damage filled in. Roles with a signature feature get it too: Minions come with Minion and Group Attack, Hordes with Horde, Solos with Relentless, and Bruisers and Leaders with Momentum.
+
+The numbers follow the adversary guidance in the Daggerheart Homebrew Kit and are tuned to the typical values of the SRD adversaries for that tier and role. Treat them as a starting point: rename the block, give the attack a name, and adjust anything in the code block.
+
 ### Renaming
 
 - **Auto-suffix:** Inserting the same adversary twice auto-names them "Bladed Guard" and "Bladed Guard 2"

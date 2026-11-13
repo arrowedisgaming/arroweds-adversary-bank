@@ -1,7 +1,7 @@
 import { Editor, Plugin, setTooltip, Menu, Notice, debounce, type Debouncer, type SectionCache } from 'obsidian';
 import { SettingTab, type PluginSettings, DEFAULT_SETTINGS } from './settings';
 import { ADV_LIBRARY, ENV_LIBRARY, ADV_TEMPLATE, ENV_TEMPLATE, isRecord, toRawAdversary, toRawAdversaries, walkFolder, tryParseYaml } from './utils';
-import { AdversaryCard, AdversaryModal, type RawAdversary } from './ui';
+import { AdversaryCard, AdversaryModal, ImprovisedTierModal, type RawAdversary } from './ui';
 
 export type InstanceOverrides = {
     hp?: number;
@@ -420,6 +420,13 @@ export default class BeastVault extends Plugin {
             },
         });
         this.addCommand({
+            id: 'insert-improvised-adversary',
+            name: 'Insert improvised adversary',
+            editorCallback: (editor: Editor) => {
+                new ImprovisedTierModal(this.app, editor).open();
+            },
+        });
+        this.addCommand({
             id: 'insert-environment-from-library',
             name: 'Insert environment from library',
             editorCallback: (editor: Editor) => {
@@ -447,6 +454,11 @@ export default class BeastVault extends Plugin {
                 .setTitle('Insert adversary from library')
                 .setIcon('book-copy')
                 .onClick(onClick((editor) => new AdversaryModal(this.app, editor, this.allAdversaries()).open())));
+
+            menu.addItem((item) => item
+                .setTitle('Insert improvised adversary')
+                .setIcon('wand-sparkles')
+                .onClick(onClick((editor) => new ImprovisedTierModal(this.app, editor).open())));
 
             menu.addItem((item) => item
                 .setTitle('Insert adversary template')
