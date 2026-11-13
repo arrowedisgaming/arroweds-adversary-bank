@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-11-12
+
 ### Added
 
 - `Insert improvised adversary` command (also in the ribbon menu): pick a tier and a role to insert a ready-to-run stat block with quick stats and the role's signature features. Numbers follow the Daggerheart Homebrew Kit's adversary guidance, tuned to the SRD adversaries of each tier and role.
+
+### Fixed
+
+- Inserting an adversary with the cursor in the middle of a line no longer breaks the code block: the stat block now starts on its own line.
 
 ## [1.12.0] - 2026-11-12
 
